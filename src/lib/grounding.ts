@@ -78,6 +78,7 @@ export interface CityIndex {
   storeById: Map<string, Store>;
   itemById: Map<string, Item>;
   pricesFor: (itemId: string) => TrustedPrice[]; // trusted price per store, cheapest first
+  reports: Report[];
 }
 
 // The whole city's prices from one (cached) read. Used by grounding and by the agent's tools.
@@ -87,6 +88,7 @@ export async function cityIndex(): Promise<CityIndex> {
   for (const r of reports) if (r.type === "price") byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
   const memo = new Map<string, TrustedPrice[]>();
   return {
+    reports,
     items,
     stores,
     storeById: new Map(stores.map((s) => [s.id, s])),

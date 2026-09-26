@@ -30,4 +30,5 @@ export const COLLECTIONS = {
   reports: "reports",
   forumPosts: "forumPosts",
   priceChanges: "priceChanges",
+  users: "users",
 } as const;

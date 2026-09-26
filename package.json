@@ -9,7 +9,8 @@
     "lint": "eslint",
     "seed": "tsx --env-file-if-exists=.env.local scripts/seed.ts",
     "smoke": "tsx --env-file-if-exists=.env.local scripts/smoke.ts",
-    "test:texting": "tsx --env-file-if-exists=.env.local scripts/texting-test.ts"
+    "test:texting": "tsx --env-file-if-exists=.env.local scripts/texting-test.ts",
+    "test:agent": "tsx --env-file-if-exists=.env.local scripts/agent-test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.24.0",

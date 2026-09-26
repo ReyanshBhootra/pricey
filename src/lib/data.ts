@@ -23,6 +23,7 @@ import type {
   NewForumPost,
   NewReport,
   PriceChange,
+  UserProfile,
   Report,
   Store,
   SubmitResult,
@@ -40,6 +41,7 @@ const seedMem = {
   reports: [...SEED_REPORTS],
   forumPosts: [...SEED_FORUM_POSTS],
   priceChanges: [] as PriceChange[],
+  users: {} as Record<string, UserProfile>,
 };
 const mem = (g.__priceyMem ??= seedMem);
 
@@ -281,4 +283,37 @@ export async function createForumPost(input: NewForumPost): Promise<ForumPost> {
   }
   const ref = await addDoc(collection(db, COLLECTIONS.forumPosts), data);
   return { ...data, id: ref.id };
+}
+
+// ---------- people ----------
+
+export async function getUser(id: string): Promise<UserProfile | null> {
+  const db = getDb();
+  if (!db) return mem.users[id] ? structuredClone(mem.users[id]) : null;
+  const snap = await getDoc(doc(db, COLLECTIONS.users, id));
+  return snap.exists() ? ({ ...snap.data(), id: snap.id } as UserProfile) : null;
+}
+
+// Merges the given fields into the profile (creating it if needed). Undefined fields are skipped.
+export async function saveUser(id: string, patch: Partial<UserProfile>): Promise<UserProfile> {
+  const clean = Object.fromEntries(Object.entries(patch).filter(([k, v]) => v !== undefined && k !== "id"));
+  const now = Date.now();
+  const existing = await getUser(id);
+  const next = { ...(existing ?? { createdAt: now }), ...clean, id, updatedAt: now } as UserProfile;
+  const db = getDb();
+  if (!db) mem.users[id] = structuredClone(next);
+  else {
+    const { id: _id, ...data } = next;
+    void _id;
+    await setDoc(doc(db, COLLECTIONS.users, id), JSON.parse(JSON.stringify(data)));
+  }
+  return next;
+}
+
+// Everyone who can be texted first (has an iMessage conversation on file).
+export async function getTextableUsers(): Promise<UserProfile[]> {
+  const db = getDb();
+  if (!db) return Object.values(mem.users).filter((u) => u.spaceId).map((u) => structuredClone(u));
+  const snap = await getDocs(query(collection(db, COLLECTIONS.users), where("spaceId", "!=", null)));
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as UserProfile);
 }

@@ -87,15 +87,15 @@ export async function submitReceiptAction(store: { storeId: string | null; newSt
   }
 }
 
-// The /text simulator: same handler as the real iMessage line.
-export async function simulateTextAction(text: string): Promise<{ reply: string; alert: string | null }> {
+// The /text simulator: same handler and brain as the real iMessage line.
+export async function simulateTextAction(text: string): Promise<{ reply: string; react: string | null; contactCard: boolean; alert: string | null }> {
   const clean = String(text ?? "").slice(0, 500);
-  if (!clean.trim()) return { reply: "Say something! Text help to see what I can do.", alert: null };
-  const { reply, action } = await handleText(`sim-${await userId()}`, clean);
+  if (!clean.trim()) return { reply: "Say something! Ask me what anything costs.", react: null, contactCard: false, alert: null };
+  const r = await handleText(`sim-${await userId()}`, clean, { channel: "web" });
   revalidatePath("/", "layout");
   // On the real line, alerts arrive later as one bundled text. Here we show one right away.
-  const alert = action && "subscribe" in action ? await dealsDigest(action.subscribe === "all" ? null : action.subscribe) : null;
-  return { reply, alert };
+  const alert = r.action && "subscribe" in r.action ? await dealsDigest(r.action.subscribe === "all" ? null : r.action.subscribe) : null;
+  return { reply: r.reply, react: r.react ?? null, contactCard: Boolean(r.contactCard), alert };
 }
 
 export type DealState = { ok: true; note: string } | { ok: false; error: string } | null;

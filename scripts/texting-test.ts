@@ -1,7 +1,7 @@
 // Checks that messy real-world texts are understood.   npm run test:texting
 import assert from "node:assert/strict";
 import { SEED_STORES } from "../src/lib/seed";
-import { findBorough, findPrice, handleText, matchStore } from "../src/lib/texting";
+import { findBorough, findPrice, handleText, handleTextRules, matchStore } from "../src/lib/texting";
 import { findPlace } from "../src/lib/places";
 import { miles } from "../src/lib/format";
 
@@ -42,7 +42,8 @@ async function main() {
   assert.equal(findBorough("any free food on staten island"), "Staten Island");
 
   // End to end on seed data (no Gemini key: questions answer from data).
-  const say = async (t: string) => (await handleText("+15551234567", t)).reply;
+  // Rules (the backup when Gemini is down), called directly.
+  const say = async (t: string) => (await handleTextRules("+15551234567", t)).reply;
   assert.match(await say("help"), /Report: eggs/);
   assert.match(await say("eggs 3.99 at key food park slope"), /Eggs \(dozen\) at Key Food Park Slope/);
   assert.match(await say("eggs 3.99 at key food"), /Which store\? Did you mean Key Food/);
@@ -54,9 +55,26 @@ async function main() {
   assert.doesNotMatch(eggs, /near you|mi |km|walk/, eggs); // borough only: no made-up distances
   const eggsZip = await say("how much are eggs near 11215?");
   assert.match(eggsZip, /^Eggs \(dozen\) near 11215: \$\d.* mi from 11215, \d+ min walk\)/, eggsZip);
-  const on = await handleText("+15551234567", "alerts on queens");
+  const on = await handleTextRules("+15551234567", "alerts on queens");
   assert.deepEqual(on.action, { subscribe: "Queens" });
-  assert.deepEqual((await handleText("+15551234567", "stop")).action, { unsubscribe: true });
+  assert.deepEqual((await handleTextRules("+15551234567", "stop")).action, { unsubscribe: true });
+
+  // Full handler without Gemini: welcome once, contact card once, ZIP becomes home, profile saved.
+  const { getUser } = await import("../src/lib/data");
+  const { phoneUserId } = await import("../src/lib/phone");
+  const newbie = "+1 (646) 555-0199";
+  const hello = await handleText(newbie, "hi");
+  assert.match(hello.reply, /^Hey! I'm Pricey/);
+  assert.equal(hello.contactCard, true);
+  const zip = await handleText("6465550199", "11215");
+  assert.match(zip.reply, /Got it, 11215 \(Brooklyn\)/);
+  assert.equal(zip.contactCard, false, "same person, different phone format: no second welcome");
+  const profile = await getUser(phoneUserId(newbie));
+  assert.equal(profile?.home?.label, "11215");
+  assert.equal(profile?.phoneLast4, "0199");
+  assert.equal(profile?.recent?.length, 4);
+  const second = await handleText(newbie, "how much are eggs near 11215?");
+  assert.doesNotMatch(second.reply, /Hey! I'm Pricey/, "welcome only once");
 
   // Same phone, spamming a price: counts once.
   for (let i = 0; i < 5; i++) await say("milk 0.50 at trader joes union sq");

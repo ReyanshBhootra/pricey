@@ -69,6 +69,47 @@ function cityData() {
   }
   return city.data;
 }
+// Call after a write so the next read sees it.
+export const forgetCityCache = () => void (city = null);
+
+export interface CityIndex {
+  items: Item[];
+  stores: Store[];
+  storeById: Map<string, Store>;
+  itemById: Map<string, Item>;
+  pricesFor: (itemId: string) => TrustedPrice[]; // trusted price per store, cheapest first
+}
+
+// The whole city's prices from one (cached) read. Used by grounding and by the agent's tools.
+export async function cityIndex(): Promise<CityIndex> {
+  const [items, stores, reports] = await cityData();
+  const byItem = new Map<string, Report[]>();
+  for (const r of reports) if (r.type === "price") byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
+  const memo = new Map<string, TrustedPrice[]>();
+  return {
+    items,
+    stores,
+    storeById: new Map(stores.map((s) => [s.id, s])),
+    itemById: new Map(items.map((i) => [i.id, i])),
+    pricesFor: (id) => {
+      if (!memo.has(id)) memo.set(id, trustedPricesByStore(byItem.get(id) ?? []).sort((a, b) => a.price - b.price));
+      return memo.get(id)!;
+    },
+  };
+}
+
+export function toFact(p: TrustedPrice, storeById: Map<string, Store>, where?: Located | null): PriceFact {
+  const s = storeById.get(p.storeId);
+  return {
+    ...p,
+    storeName: s?.name ?? p.storeId,
+    borough: s?.borough ?? "",
+    distanceKm: s && where && !where.approximate ? distanceKm(where.lat, where.lng, s.lat, s.lng) : null,
+  };
+}
+
+// Near the person, cheaper wins; far away stores only rank high if much cheaper.
+export const byValue = (a: PriceFact, b: PriceFact) => a.price + (a.distanceKm ?? 0) * 0.15 - (b.price + (b.distanceKm ?? 0) * 0.15);
 
 // "0.6 mi from 11215, 12 min walk" or "0.4 mi away, 8 min walk".
 export function distanceText(km: number, where?: Located | null) {
@@ -78,30 +119,12 @@ export function distanceText(km: number, where?: Located | null) {
 }
 
 export async function buildContext(question: string, where?: Located | null): Promise<Context> {
-  const [[items, stores, reports], events] = await Promise.all([
-    cityData(),
+  const [{ items, storeById, itemById, pricesFor }, events] = await Promise.all([
+    cityIndex(),
     getActiveEvents({ hours: 24, ...(where ? { lat: where.lat, lng: where.lng, radiusKm: 5 } : {}) }),
   ]);
-  const storeById = new Map(stores.map((s) => [s.id, s]));
-  const itemById = new Map(items.map((i) => [i.id, i]));
-
-  // Trusted price per store for every item, cheapest first, from one read.
-  const byItem = new Map<string, Report[]>();
-  for (const r of reports) if (r.type === "price") byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
-  const pricesFor = (id: string) => trustedPricesByStore(byItem.get(id) ?? []).sort((a, b) => a.price - b.price);
-
-  const fact = (p: TrustedPrice): PriceFact => {
-    const s = storeById.get(p.storeId) as Store | undefined;
-    return {
-      ...p,
-      storeName: s?.name ?? p.storeId,
-      borough: s?.borough ?? "",
-      distanceKm: s && where && !where.approximate ? distanceKm(where.lat, where.lng, s.lat, s.lng) : null,
-    };
-  };
-  // Near the user, cheaper wins; far away stores only count if much cheaper.
-  const rank = (a: PriceFact, b: PriceFact) =>
-    a.price + (a.distanceKm ?? 0) * 0.15 - (b.price + (b.distanceKm ?? 0) * 0.15);
+  const fact = (p: TrustedPrice) => toFact(p, storeById, where);
+  const rank = byValue;
 
   const mentioned = matchItems(question, items)
     .slice(0, 5)
@@ -156,6 +179,8 @@ Rules:
 - For meal or cooking questions: ingredients or tools the user says they already have (for example paneer, an air fryer) can be used freely, and you may give simple cooking steps from general knowledge. Anything they would need to BUY must come from DATA with its price and store; give the total of what to buy. If a needed ingredient is not in DATA, say nobody has reported its price yet.
 - Mention free food or deals from DATA when relevant.
 - Keep it short: under 120 words, 2 to 6 sentences or a short list. Plain text, no markdown headings or bold. Use "- " for list items.
+- Reply in the language the user writes in (Spanish, Chinese, Bengali, Russian, anything). Keep store and item names as they appear in DATA.
+- Distances are in miles. Quote them exactly as DATA gives them; never make one up.
 - If asked about something unrelated to food prices in NYC, briefly steer back.`;
 
 // No Gemini (no key, outage, quota)? Still give a useful, grounded answer.

@@ -2,22 +2,36 @@
 // Used by /api/text (the Photon iMessage relay in bot/) and by the /text simulator page.
 // Same data, vouching, and Gemini grounding as the app.
 
-import { createHash } from "node:crypto";
 import { addItem, getActiveEvents, getItems, getStores, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { BOROUGH_PLACES, findPlace } from "./places";
 import { generate, geminiEnabled, CHAT_MODELS } from "./gemini";
 import { answerFromData, buildContext, matchItems, SYSTEM_PROMPT } from "./grounding";
-import type { Borough, Item, Report, Store } from "./types";
+import type { Borough, ChatTurn, Item, Report, Store, UserProfile } from "./types";
 
 export type TextAction = { subscribe: Borough | "all" } | { unsubscribe: true } | null;
 export interface TextReply {
   reply: string;
-  action: TextAction;
+  action: TextAction; // for relays from before accounts; newer ones read alerts from the server
+  react?: string | null; // tapback glyph on their message ("👍" after a save)
+  contactCard?: boolean; // send Pricey's contact card (first message only)
+  source?: "gemini" | "rules";
 }
 
-// Phone numbers never get stored: reports carry a one-way hash as the userId.
-export const textUserId = (from: string) => `text-${createHash("sha256").update(from.trim().toLowerCase()).digest("hex").slice(0, 16)}`;
+export interface Incoming {
+  channel?: Channel;
+  spaceId?: string; // iMessage conversation id, so Pricey can text them first later
+  attachments?: { mimeType: string; data: Buffer; name?: string }[];
+  model?: ModelCall; // tests swap Gemini for a scripted stand-in
+}
+
+// Kept for the relay and tests; the id itself comes from phone.ts.
+import { phoneLast4, phoneUserId, phoneUserId as textUserId } from "./phone";
+import { runAgent, type Channel, type ModelCall } from "./agent";
+import { parseReceipt } from "./receipt";
+import { getUser, saveUser } from "./data";
+import { coordsFromText, placeFromCoords, placeFromZip } from "./places";
+export { textUserId };
 
 export const HELP = [
   "Pricey: real NYC food prices from real people.",
@@ -167,7 +181,8 @@ async function answerQuestion(text: string): Promise<string> {
   return answerFromData(text, ctx);
 }
 
-export async function handleText(from: string, raw: string): Promise<TextReply> {
+// Rule-based replies: the backup when Gemini is unavailable. Fixed commands, fixed wording.
+export async function handleTextRules(from: string, raw: string): Promise<TextReply> {
   const text = raw.replace(/\s+/g, " ").trim().slice(0, 500);
   const t = text.toLowerCase();
   const none = (reply: string): TextReply => ({ reply, action: null });
@@ -204,4 +219,96 @@ export async function handleText(from: string, raw: string): Promise<TextReply> 
   }
 
   return none(await answerQuestion(text));
+}
+
+const WELCOME =
+  "Hey! I'm Pricey. I keep track of what food really costs around NYC, thanks to people like you. Ask me how much something is, or tell me a price you just paid. What's your ZIP? I'll find stuff close by.";
+
+const addTurn = (recent: ChatTurn[] | undefined, ...turns: ChatTurn[]) => [...(recent ?? []), ...turns].slice(-8);
+
+// Every text, from iMessage or the /text simulator, comes through here.
+export async function handleText(from: string, raw: string, incoming: Incoming = {}): Promise<TextReply> {
+  const channel = incoming.channel ?? "imessage";
+  const id = phoneUserId(from);
+  const user: UserProfile = (await getUser(id)) ?? { id };
+  const first = !user.welcomedAt;
+  const now = Date.now();
+  let text = raw.replace(/\s+/g, " ").trim().slice(0, 800);
+  const patch: Partial<UserProfile> = {
+    welcomedAt: user.welcomedAt ?? now,
+    spaceId: incoming.spaceId ?? user.spaceId,
+    phoneLast4: user.phoneLast4 ?? (channel === "imessage" ? phoneLast4(from) : undefined),
+  };
+  let note = "";
+
+  // Gentle rate limit (20 texts a minute): protects the Gemini quota from runaway loops.
+  const sentAt = [...(user.sentAt ?? []).filter((t) => now - t < 60_000), now];
+  patch.sentAt = sentAt.slice(-20);
+  if (sentAt.length > 20) {
+    await saveUser(id, { sentAt: patch.sentAt });
+    return { reply: "Whoa, that's a lot at once. Give me a sec and try again in a minute.", action: null };
+  }
+
+  for (const a of incoming.attachments ?? []) {
+    // A shared location pin: remember it as home, with the nearest ZIP as its label.
+    const coords = /vcard|text\/|location/i.test(a.mimeType) || /\.vcf$/i.test(a.name ?? "") ? coordsFromText(a.data.toString("utf8")) : null;
+    const pin = coords && placeFromCoords(coords.lat, coords.lng);
+    if (pin) {
+      patch.home = { label: pin.label, lat: pin.lat, lng: pin.lng, borough: pin.borough };
+      note += `[They shared a location pin. Saved as their home: near ${pin.label}, ${pin.borough}. Confirm briefly.]\n`;
+      continue;
+    }
+    // A photo: read it as a receipt and hold it until they confirm.
+    if (/^image\//.test(a.mimeType) && geminiEnabled()) {
+      try {
+        const r = await parseReceipt(a.data, a.mimeType);
+        if (r.lines.length) {
+          patch.pending = { kind: "receipt", storeId: r.storeId, storeName: r.storeName, lines: r.lines.map(({ name, price, itemId, category, raw }) => ({ name, price, itemId, category, raw })), at: now };
+          note += `[They just sent a receipt photo. It's parsed and PENDING (see ABOUT THEM). Summarize it briefly: store, number of items, 3 or 4 example prices, total. ${r.storeId ? "" : "Ask which store it's from. "}Ask them to reply yes to save, or tell you what to fix.]\n`;
+        } else note += "[They sent a photo but it didn't look like a food receipt. Tell them kindly.]\n";
+      } catch (e) {
+        console.error("Receipt photo failed:", e instanceof Error ? e.message : e);
+        note += "[They sent a photo but it couldn't be read right now. Ask them to try again in a bit.]\n";
+      }
+    }
+  }
+  if (!text) text = incoming.attachments?.length ? "(sent an attachment)" : "hi";
+
+  let out: TextReply | null = null;
+  if (geminiEnabled() || incoming.model) {
+    try {
+      const r = await runAgent({ user: { ...user, ...patch }, text, channel, firstMessage: first, note: note.trim() || undefined }, incoming.model);
+      Object.assign(patch, r.patch);
+      out = { reply: r.reply, react: r.react, action: legacyAction(r.patch), source: "gemini" };
+    } catch (e) {
+      console.error("Agent failed, using rules:", e instanceof Error ? e.message : e);
+    }
+  }
+  if (!out) {
+    const zip = text.match(/^\s*(?:home\s*|i'?m in\s*)?(1\d{4})\s*$/i)?.[1];
+    const place = zip ? placeFromZip(zip) : null;
+    if (place) {
+      patch.home = { label: place.label, lat: place.lat, lng: place.lng, borough: place.borough };
+      out = { reply: `Got it, ${place.label} (${place.borough}). I'll use that for distances. Ask me how much anything is!`, react: "👍", action: null };
+    } else if (first && /^(hi|hey|hello|yo|sup|start|help|\?)\W*$/i.test(text)) {
+      out = { reply: WELCOME, action: null };
+    } else {
+      out = await handleTextRules(from, text);
+      if (first) out.reply = `${WELCOME}\n\n${out.reply}`;
+    }
+    out.source = "rules";
+    if (out.action && "subscribe" in out.action) patch.alerts = { area: out.action.subscribe, since: now };
+    if (out.action && "unsubscribe" in out.action) patch.alerts = null;
+  }
+
+  patch.recent = addTurn(user.recent, { role: "user", text: text.slice(0, 300), at: now }, { role: "pricey", text: out.reply.slice(0, 400), at: Date.now() });
+  await saveUser(id, patch);
+  return { ...out, contactCard: first };
+}
+
+// Older relays keep their own alert list; tell them when alerts change.
+function legacyAction(p: Partial<UserProfile>): TextAction {
+  if (p.alerts === null) return { unsubscribe: true };
+  if (p.alerts) return { subscribe: p.alerts.area };
+  return null;
 }

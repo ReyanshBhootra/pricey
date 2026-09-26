@@ -130,3 +130,21 @@ export function findPlace(text: string): Place | null {
 }
 
 export const isNycZip = (zip: string) => zip in zips;
+
+// A shared location pin: exact spot, labeled by the nearest ZIP ("0.3 mi from 11215").
+export function placeFromCoords(lat: number, lng: number): Place | null {
+  let best: { zip: string; d: number; borough: Borough } | null = null;
+  for (const [zip, [zl, zg, b]] of Object.entries(zips)) {
+    const d = (zl - lat) ** 2 + ((zg - lng) * 0.76) ** 2;
+    if (!best || d < best.d) best = { zip, d, borough: b };
+  }
+  // About 3 miles from the closest ZIP center means the pin isn't in NYC.
+  if (!best || best.d > 0.0025) return null;
+  return { lat, lng, label: best.zip, borough: best.borough };
+}
+
+// Apple Maps / Google Maps links inside a shared location card.
+export function coordsFromText(text: string): { lat: number; lng: number } | null {
+  const m = text.match(/[?&](?:ll|q|sll|center)=(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/) ?? text.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+  return m ? { lat: Number(m[1]), lng: Number(m[2]) } : null;
+}

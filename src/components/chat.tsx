@@ -60,8 +60,23 @@ export function Chat() {
         body: JSON.stringify({ messages: next, ...(where ?? {}) }),
         signal: AbortSignal.timeout(35000),
       });
-      const data = await res.json().catch(() => ({}));
-      setMessages([...next, { role: "assistant", text: data.reply ?? data.error ?? "Something went wrong. Try asking again." }]);
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}));
+        setMessages([...next, { role: "assistant", text: data.error ?? "Something went wrong. Try asking again." }]);
+        return;
+      }
+      // Show the answer word by word as it streams in.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += decoder.decode(value, { stream: true });
+        setMessages([...next, { role: "assistant", text }]);
+      }
+      text += decoder.decode();
+      setMessages([...next, { role: "assistant", text: text.trim() || "Something went wrong. Try asking again." }]);
     } catch (e) {
       const slow = e instanceof DOMException && e.name === "TimeoutError";
       setMessages([...next, { role: "assistant", text: slow ? "That took too long. Try asking again." : "I couldn't reach the server. Check your connection and try again." }]);
@@ -98,11 +113,11 @@ export function Chat() {
                 m.role === "user" ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border bg-card shadow-xs",
               )}
             >
-              {m.text}
+              {m.text.replace(/\*\*/g, "")}
             </p>
           </li>
         ))}
-        {busy && (
+        {busy && messages.at(-1)?.role === "user" && (
           <li className="flex">
             <p className="rounded-2xl rounded-bl-sm border bg-card px-4 py-2.5 text-sm text-muted-foreground shadow-xs">Checking prices...</p>
           </li>

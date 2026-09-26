@@ -53,12 +53,21 @@ export function matchItems(question: string, items: Item[]): Item[] {
   return scored.filter((x) => x.score >= best / 2).sort((a, b) => b.score - a.score).map((x) => x.i);
 }
 
+// Items, stores, and every report, cached for 15 seconds per server instance.
+let city: { at: number; data: Promise<[Item[], Store[], Report[]]> } | null = null;
+function cityData() {
+  if (!city || Date.now() - city.at > 15000) {
+    const data = Promise.all([getItems(), getStores(), getAllReports()]);
+    city = { at: Date.now(), data };
+    data.catch(() => (city = null)); // don't cache a failure
+  }
+  return city.data;
+}
+
 export async function buildContext(question: string, where?: Located | null): Promise<Context> {
-  const [items, stores, events, reports] = await Promise.all([
-    getItems(),
-    getStores(),
+  const [[items, stores, reports], events] = await Promise.all([
+    cityData(),
     getActiveEvents({ hours: 24, ...(where ? { lat: where.lat, lng: where.lng, radiusKm: 5 } : {}) }),
-    getAllReports(),
   ]);
   const storeById = new Map(stores.map((s) => [s.id, s]));
   const itemById = new Map(items.map((i) => [i.id, i]));

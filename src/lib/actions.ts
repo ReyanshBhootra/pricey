@@ -56,6 +56,36 @@ export async function submitReportAction(_prev: ReportState, form: FormData): Pr
   }
 }
 
+export type ReceiptLineInput = { itemId: string | null; name: string; category: Category; price: number };
+export type ReceiptSubmitState = { ok: true; saved: number; changed: number } | { ok: false; error: string };
+
+// Saves the lines a person confirmed after scanning a receipt, one report per line.
+export async function submitReceiptAction(store: { storeId: string | null; newStoreName?: string; newStoreBorough?: string }, lines: ReceiptLineInput[]): Promise<ReceiptSubmitState> {
+  const good = lines.filter((l) => Number.isFinite(l.price) && l.price >= 0 && l.price <= 1000 && (l.itemId || l.name?.trim())).slice(0, 60);
+  if (!good.length) return { ok: false, error: "Pick at least one line to save." };
+
+  try {
+    let storeId = store.storeId;
+    if (!storeId) {
+      const borough = store.newStoreBorough as Borough;
+      if (!store.newStoreName?.trim() || !BOROUGHS.includes(borough)) return { ok: false, error: "Pick the store, or name it and pick its borough." };
+      storeId = (await addStore({ name: store.newStoreName.slice(0, 100), borough, ...BOROUGH_CENTERS[borough] })).id;
+    }
+
+    const uid = await userId();
+    let changed = 0;
+    for (const l of good) {
+      const itemId = l.itemId ?? (await addItem({ name: l.name.slice(0, 80), category: CATEGORIES.includes(l.category) ? l.category : "pantry" })).id;
+      const r = await submitReport({ itemId, storeId, price: l.price, userId: uid, type: "price" });
+      if (r.priceChanged) changed++;
+    }
+    revalidatePath("/", "layout");
+    return { ok: true, saved: good.length, changed };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not save the receipt." };
+  }
+}
+
 export async function createPostAction(form: FormData) {
   const borough = String(form.get("borough")) as Borough;
   const text = String(form.get("text") ?? "").trim().slice(0, 500);

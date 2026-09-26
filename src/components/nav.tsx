@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, MessagesSquare, Plus } from "lucide-react";
+import { MapPin, MessagesSquare, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/", label: "Nearby", icon: MapPin },
   { href: "/report", label: "Report", icon: Plus },
+  { href: "/chat", label: "Ask", icon: Sparkles },
   { href: "/forum", label: "Forum", icon: MessagesSquare },
 ];
 
@@ -21,17 +22,17 @@ export function Nav() {
         </Link>
         <nav className="flex gap-1 text-sm">
           {LINKS.map(({ href, label, icon: Icon }) => {
-            const active = href === "/" ? path === "/" : path.startsWith(href);
+            const active = href === "/" ? path === "/" : path.startsWith(href) || (href === "/report" && path.startsWith("/scan"));
             return (
               <Link
                 key={href}
                 href={href}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors sm:px-3",
                   active ? "bg-foreground text-background" : "hover:bg-accent",
                 )}
               >
-                <Icon className="size-4" />
+                <Icon className="hidden size-4 sm:block" />
                 {label}
               </Link>
             );

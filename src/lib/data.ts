@@ -93,6 +93,11 @@ export async function getNearbyStores(lat: number, lng: number, radiusKm = 3): P
     .sort((a, b) => a.distanceKm - b.distanceKm);
 }
 
+// Every report (for grounding the chatbot on the whole city in one read).
+export function getAllReports(): Promise<Report[]> {
+  return all<Report>(getDb(), "reports");
+}
+
 // Trusted price of one item at every store that has reports, cheapest first.
 export async function getPricesForItem(itemId: string): Promise<TrustedPrice[]> {
   const reports = await reportsWhere("itemId", itemId);

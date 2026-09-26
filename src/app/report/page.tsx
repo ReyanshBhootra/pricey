@@ -1,3 +1,5 @@
+import { Camera } from "lucide-react";
+import Link from "next/link";
 import { LiveRefresh } from "@/components/live-refresh";
 import { PriceList } from "@/components/price-list";
 import { ReportForm } from "@/components/report-form";
@@ -20,6 +22,12 @@ export default async function ReportPage({ searchParams }: PageProps<"/report">)
     <>
       <h1 className="mb-1 text-2xl font-bold tracking-tight">Report a price</h1>
       <p className="mb-4 text-sm text-muted-foreground">What did you pay? Every person gets one vote per item and store.</p>
+      <Link href="/scan" className="mb-4 flex items-center gap-3 rounded-xl border bg-brand-soft p-3 text-sm hover:opacity-90">
+        <Camera className="size-5 shrink-0 text-primary" />
+        <span>
+          <strong>Have a receipt?</strong> Scan it and add every price at once.
+        </span>
+      </Link>
       <ReportForm items={sortedItems} stores={sortedStores} itemId={item ? itemId : ""} storeId={storeId} newItemName={newItem} />
       {item && (
         <section className="mt-6">

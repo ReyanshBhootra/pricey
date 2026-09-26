@@ -4,6 +4,8 @@
 import assert from "node:assert/strict";
 import { getNearbyStores, getPricesForItem, getActiveEvents, submitReport } from "../src/lib/data";
 import { trustedPrice } from "../src/lib/vouch";
+import { answerFromData, buildContext, matchItems } from "../src/lib/grounding";
+import { SEED_ITEMS } from "../src/lib/seed";
 
 async function main() {
   const shoprite = (await getPricesForItem("potatoes-5lb")).find((p) => p.storeId === "shoprite-staten-island");
@@ -29,6 +31,24 @@ async function main() {
 
   const events = await getActiveEvents();
   console.log("active events:", events.length);
+  // Grounding (chatbot): questions map to items, answers quote real data.
+  assert.deepEqual(matchItems("how much are eggs near me?", SEED_ITEMS).map((i) => i.id), ["eggs-dozen"]);
+  assert.deepEqual(matchItems("cheapest latte", SEED_ITEMS).map((i) => i.id), ["latte-12oz"]);
+  assert.deepEqual(matchItems("what can I cook cheap right now", SEED_ITEMS), []);
+  const ctx = await buildContext("how much are eggs near me", { lat: 40.7342, lng: -73.9897 });
+  assert.ok(ctx.text.includes("Eggs (dozen)") && ctx.mentioned[0].prices.length > 0);
+  const eggs = answerFromData("how much are eggs near me", ctx);
+  assert.match(eggs, /^Eggs \(dozen\) near you: \$\d/);
+  console.log("grounded fallback:", eggs);
+  const meal = answerFromData("what can I cook for under $10", await buildContext("what can I cook for under $10"));
+  const total = Number(meal.match(/Total: \$(\d+\.\d\d)/)?.[1]);
+  assert.ok(total > 0 && total <= 10, "meal respects the $10 budget: " + meal);
+  console.log("meal fallback:\n" + meal);
+  const convo = await buildContext("how much are eggs near me\nwhat can I cook for under $10");
+  assert.match(answerFromData("what can I cook for under $10", convo), /cheap meal/, "new intent wins over earlier item");
+  assert.match(answerFromData("is that the cheapest?", await buildContext("how much are eggs\nis that the cheapest?")), /^Eggs/, "follow-up keeps the item");
+  assert.match(answerFromData("any free food right now", await buildContext("any free food right now")), /deals right now/);
+
   console.log("OK");
   process.exit(0);
 }

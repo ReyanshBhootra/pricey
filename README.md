@@ -19,7 +19,8 @@ No setup needed to start. Without Firebase env vars the app runs on an in-memory
 3. **Seed.** `npm run seed`. This must run while Firestore is still in test mode, because the seed has back-dated timestamps the real rules reject.
 4. **Lock it down.** `npx firebase-tools login`, then `npx firebase-tools use --add` (pick the project), then `npx firebase-tools deploy --only firestore:rules`. Rules live in `firestore.rules`: anyone can read and add well-formed data, nobody can edit or delete.
 5. **Check.** `npm run smoke` and `npm run dev`. Same app, now on Firestore, and new reports appear live in other browsers instantly.
-6. **Vercel.** vercel.com → Add New Project → import this repo. Paste the same six `NEXT_PUBLIC_FIREBASE_*` variables under Environment Variables → Deploy.
+6. **Gemini.** Get a free key at aistudio.google.com/apikey and set `GEMINI_API_KEY` in `.env.local`. Without it, chat still answers from data and receipt scanning shows a friendly "not set up" message.
+7. **Vercel.** vercel.com → Add New Project → import this repo. Paste the six `NEXT_PUBLIC_FIREBASE_*` variables and `GEMINI_API_KEY` under Environment Variables → Deploy.
 
 Do not deploy to Vercel without Firebase: seed mode keeps data in server memory, which is per instance and gets wiped on serverless.
 
@@ -63,13 +64,21 @@ Everyone imports from here. Do not talk to Firestore directly.
 - `/report`: pick or add an item and store, submit, watch the list below update with your store highlighted.
 - `/forum`: borough tabs, post and read, live.
 
+## Gemini: chat and receipts (C, done)
+
+- `/chat` (Ask in the nav): questions like "how much are eggs near me", "what can I cook for under $10", "any free food right now". Uses the person's location if they allowed it.
+- **Grounding** (`src/lib/grounding.ts`): `buildContext(question, location)` builds a fact sheet from our data (prices for items in the question with distance and vote counts, cheapest price per item nearby, active deals). Gemini gets it as `DATA` with a system prompt that forbids inventing prices. Grounds on the last 3 questions so follow-ups keep their item.
+- **Fallback:** if Gemini has no key, errors, or hits quota, `answerFromData` answers price, deal, and budget meal questions straight from the data. The demo never shows a dead chat.
+- `/scan` (linked from Report): photo is shrunk in the browser, sent to `/api/receipt`, Gemini returns JSON (schema enforced) with store and lines matched to our catalog. The server drops bad prices and unknown ids. The person reviews, edits, and unticks lines before anything is saved, then each line becomes a report (new items are created).
+- **Person D:** reuse `buildContext` + `SYSTEM_PROMPT` + `answerFromData` for replies to texts. Same grounding, same fallback.
+
 Every page refreshes live: Firestore listeners when configured, 20 second polling in seed mode. Tracked items are kept in the browser (no login). userId is an anonymous cookie.
 
 ## Who owns what
 
 - **A, backend:** Firebase project and config, `src/lib/firebase.ts`, `src/lib/data.ts`, `src/lib/vouch.ts`, seed data, price change alerts.
 - **B, frontend:** nearby list, report form, category filter, borough forum, Vercel deploy. Add more shadcn components with `npx shadcn@latest add <name>`.
-- **C, Gemini:** `/chat` page and `src/app/api/chat/route.ts`, receipt scanning into `submitReport` (use `addItem` for items not in the list). `GEMINI_API_KEY` stays server side.
+- **C, Gemini:** done, see above. `src/lib/gemini.ts`, `src/lib/grounding.ts`, `src/lib/receipt.ts`, `src/app/api/chat`, `src/app/api/receipt`.
 - **D, Photon:** `src/app/api/photon/route.ts` webhook, text parsing into `submitReport`, batched alerts from `getActiveEvents`.
 
 Put your own code in your own folders so merges stay boring. Pull `main` often.

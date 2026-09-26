@@ -29,4 +29,5 @@ export const COLLECTIONS = {
   items: "items",
   reports: "reports",
   forumPosts: "forumPosts",
+  priceChanges: "priceChanges",
 } as const;

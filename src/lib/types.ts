@@ -62,6 +62,16 @@ export interface ForumPost {
   userId: string;
 }
 
+// Firestore collection: "priceChanges" (written by submitReport, read for alerts)
+export interface PriceChange {
+  id: string;
+  itemId: string;
+  storeId: string;
+  oldPrice: number;
+  newPrice: number;
+  timestamp: number;
+}
+
 // What you send to submitReport. id and timestamp are filled in for you.
 export type NewReport = Omit<Report, "id" | "timestamp">;
 export type NewForumPost = Omit<ForumPost, "id" | "timestamp">;

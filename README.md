@@ -33,13 +33,24 @@ Everyone imports from here. Do not talk to Firestore directly.
 | `getNearbyStores(lat, lng, radiusKm = 3)` | stores closest first, with `distanceKm` |
 | `getPricesForItem(itemId)` | trusted price per store, cheapest first |
 | `getStorePrices(storeId, category?)` | trusted price per item at one store |
+| `getPricesForStores(storeIds, category?)` | same, for many stores in one call |
+| `getPriceChanges({ hours, itemIds })` | recent trusted price moves, for alerts |
 | `getReportsForStore(storeId)` | raw reports, newest first |
 | `getActiveEvents({ hours, lat, lng, radiusKm })` | free food and pop-ups, newest first |
 | `getForumPosts(borough)` | posts, newest first |
 | `submitReport({ itemId, storeId, price, userId, type, note? })` | `{ report, priceChanged, oldPrice, newPrice }` |
 | `createForumPost({ borough, text, userId })` | the saved post |
 
-`priceChanged` is the hook for price change alerts: it is true when a new report moves the trusted price.
+`priceChanged` is true when a new report moves the trusted price. Each move is also saved to the `priceChanges` collection, which is what the Nearby page reads to alert people about items they track.
+
+## Screens (A + B, done)
+
+- `/` Nearby: asks for location (falls back to a borough outside NYC), category filter, deals banner, alerts for tracked items.
+- `/item/[id]`: trusted price at every store, cheapest first, with a Track button.
+- `/report`: submit a price and watch the list below update, with your store highlighted.
+- `/forum`: borough tabs, post and read.
+
+Tracked items are kept in the browser (no login). userId is an anonymous cookie.
 
 ## Who owns what
 

@@ -19,6 +19,7 @@ import type {
   Item,
   NewForumPost,
   NewReport,
+  PriceChange,
   Report,
   Store,
   SubmitResult,
@@ -28,12 +29,16 @@ import { distanceKm, trustedPrice, trustedPricesByItem, trustedPricesByStore } f
 
 // ---------- in-memory fallback ----------
 
-const mem = {
+// Kept on globalThis so writes survive dev hot reloads.
+const g = globalThis as unknown as { __priceyMem?: typeof seedMem };
+const seedMem = {
   stores: [...SEED_STORES],
   items: [...SEED_ITEMS],
   reports: [...SEED_REPORTS],
   forumPosts: [...SEED_FORUM_POSTS],
+  priceChanges: [] as PriceChange[],
 };
+const mem = (g.__priceyMem ??= seedMem);
 
 async function all<T>(db: Firestore | null, name: keyof typeof mem): Promise<T[]> {
   if (!db) return mem[name] as T[];
@@ -75,6 +80,50 @@ export async function getNearbyStores(lat: number, lng: number, radiusKm = 3): P
 export async function getPricesForItem(itemId: string): Promise<TrustedPrice[]> {
   const reports = await reportsWhere("itemId", itemId);
   return trustedPricesByStore(reports).sort((a, b) => a.price - b.price);
+}
+
+// Trusted prices for many stores in one go (for the nearby list).
+// Returns storeId -> trusted prices, optionally filtered by category.
+export async function getPricesForStores(storeIds: string[], category?: Category): Promise<Map<string, TrustedPrice[]>> {
+  const db = getDb();
+  let reports: Report[] = [];
+  if (!db) {
+    const ids = new Set(storeIds);
+    reports = mem.reports.filter((r) => ids.has(r.storeId));
+  } else {
+    // Firestore "in" takes up to 30 values.
+    for (let i = 0; i < storeIds.length; i += 30) {
+      const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("storeId", "in", storeIds.slice(i, i + 30))));
+      reports.push(...snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report));
+    }
+  }
+  const items = category ? await getItems() : [];
+  const allowed = category ? new Set(items.filter((i) => i.category === category).map((i) => i.id)) : null;
+
+  const byStore = new Map<string, Report[]>();
+  for (const r of reports) {
+    if (allowed && !allowed.has(r.itemId)) continue;
+    byStore.set(r.storeId, [...(byStore.get(r.storeId) ?? []), r]);
+  }
+  return new Map(storeIds.map((id) => [id, trustedPricesByItem(byStore.get(id) ?? [])]));
+}
+
+// Recent trusted price moves, newest first. Pass itemIds to only get tracked items.
+export async function getPriceChanges(opts: { hours?: number; itemIds?: string[] } = {}): Promise<PriceChange[]> {
+  const { hours = 48, itemIds } = opts;
+  const since = Date.now() - hours * 60 * 60 * 1000;
+  const db = getDb();
+  let changes: PriceChange[];
+  if (!db) {
+    changes = mem.priceChanges;
+  } else {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.priceChanges), where("timestamp", ">=", since)));
+    changes = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as PriceChange);
+  }
+  const wanted = itemIds ? new Set(itemIds) : null;
+  return changes
+    .filter((c) => c.timestamp >= since && (!wanted || wanted.has(c.itemId)))
+    .sort((a, b) => b.timestamp - a.timestamp);
 }
 
 // Raw reports for a store (price and event), newest first.
@@ -149,7 +198,15 @@ export async function submitReport(input: NewReport): Promise<SubmitResult> {
   const after = trustedPrice([...existing, report]);
   const oldPrice = before?.price ?? null;
   const newPrice = after?.price ?? null;
-  return { report, priceChanged: oldPrice !== null && oldPrice !== newPrice, oldPrice, newPrice };
+  const priceChanged = oldPrice !== null && newPrice !== null && oldPrice !== newPrice;
+
+  if (priceChanged) {
+    const change = { itemId: report.itemId, storeId: report.storeId, oldPrice, newPrice, timestamp: report.timestamp };
+    if (!db) mem.priceChanges.push({ ...change, id: `mem-change-${mem.priceChanges.length + 1}` });
+    else await addDoc(collection(db, COLLECTIONS.priceChanges), change);
+  }
+
+  return { report, priceChanged, oldPrice, newPrice };
 }
 
 export async function createForumPost(input: NewForumPost): Promise<ForumPost> {

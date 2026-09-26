@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { addItem, addStore, createForumPost, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
+import { dealsDigest, handleText, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult } from "./types";
 
 // Anonymous per-browser id so reports and posts have a userId without login.
@@ -83,6 +84,36 @@ export async function submitReceiptAction(store: { storeId: string | null; newSt
     return { ok: true, saved: good.length, changed };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Could not save the receipt." };
+  }
+}
+
+// The /text simulator: same handler as the real iMessage line.
+export async function simulateTextAction(text: string): Promise<{ reply: string; alert: string | null }> {
+  const clean = String(text ?? "").slice(0, 500);
+  if (!clean.trim()) return { reply: "Say something! Text help to see what I can do.", alert: null };
+  const { reply, action } = await handleText(`sim-${await userId()}`, clean);
+  revalidatePath("/", "layout");
+  // On the real line, alerts arrive later as one bundled text. Here we show one right away.
+  const alert = action && "subscribe" in action ? await dealsDigest(action.subscribe === "all" ? null : action.subscribe) : null;
+  return { reply, alert };
+}
+
+export type DealState = { ok: true; note: string } | { ok: false; error: string } | null;
+
+export async function submitDealAction(_prev: DealState, form: FormData): Promise<DealState> {
+  const storeId = String(form.get("storeId") ?? "");
+  const what = String(form.get("what") ?? "").trim();
+  const priceText = String(form.get("price") ?? "").trim();
+  const price = priceText ? Number(priceText) : 0;
+  if (!storeId) return { ok: false, error: "Pick where it is." };
+  if (!what) return { ok: false, error: "Say what it is, like: free bagels until 5pm." };
+  if (!Number.isFinite(price) || price < 0 || price > 1000) return { ok: false, error: "Leave price empty for free, or enter a price like 1.00." };
+  try {
+    const note = await postDeal({ userId: await userId(), storeId, what, price });
+    revalidatePath("/", "layout");
+    return { ok: true, note };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not post that." };
   }
 }
 

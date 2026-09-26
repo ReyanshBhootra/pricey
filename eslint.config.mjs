@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate Photon relay project with its own dependencies.
+    "bot/**",
   ]),
 ]);
 

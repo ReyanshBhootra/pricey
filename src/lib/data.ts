@@ -179,7 +179,14 @@ export async function getActiveEvents(opts: { hours?: number; lat?: number; lng?
     const nearby = new Set((await getNearbyStores(lat, lng, radiusKm)).map((s) => s.id));
     events = events.filter((e) => nearby.has(e.storeId));
   }
-  return events.sort((a, b) => b.timestamp - a.timestamp);
+  // The same deal posted twice (or by two people) shows once, newest first.
+  const seen = new Set<string>();
+  return events
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .filter((e) => {
+      const key = `${e.storeId}|${(e.note ?? e.itemId).toLowerCase().replace(/\W+/g, " ").trim()}`;
+      return !seen.has(key) && seen.add(key);
+    });
 }
 
 export async function getForumPosts(borough: Borough): Promise<ForumPost[]> {

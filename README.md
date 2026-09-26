@@ -73,6 +73,14 @@ Everyone imports from here. Do not talk to Firestore directly.
 - `/scan` (linked from Report): photo is shrunk in the browser, sent to `/api/receipt`, Gemini returns JSON (schema enforced) with store and lines matched to our catalog. The server drops bad prices and unknown ids. The person reviews, edits, and unticks lines before anything is saved, then each line becomes a report (new items are created).
 - **Person D:** reuse `buildContext` + `SYSTEM_PROMPT` + `answerFromData` for replies to texts. Same grounding, same fallback.
 
+## Texting and free food alerts (D, done)
+
+- **Text Pricey** (`src/lib/texting.ts`): `eggs 3.99 at key food park slope` reports a price (vouching applies, one vote per phone), `free bagels at myrtle deli until 5pm` posts a deal, `deals in brooklyn` returns "N spots have discounts right now", `alerts on brooklyn` / `stop` manage alerts, anything else is answered by Gemini with the same grounding and fallback as the chat. Phone numbers are never stored, only a one-way hash.
+- **Free food / deals in the app:** Report page, "Free food or deal" tab. Same pipeline (a report with `type: "event"`). Shows in the Nearby deals banner and in texted alerts. Duplicates show once.
+- **Try it without a phone:** `/text` is an iMessage-style simulator using the same handler.
+- **Real iMessage via Photon:** `bot/` is a tiny Spectrum relay that forwards texts to `/api/text` (locked with `TEXT_BOT_SECRET`) and every few minutes sends subscribers one bundled alert from `/api/text/digest`. Setup in `bot/README.md`. Needs a phone added in the Photon dashboard.
+- Tests: `npm run test:texting` (parsing and replies), `cd bot && bun test` (the relay, with Photon faked, against a running app).
+
 Every page refreshes live: Firestore listeners when configured, 20 second polling in seed mode. Tracked items are kept in the browser (no login). userId is an anonymous cookie.
 
 ## Who owns what
@@ -80,7 +88,7 @@ Every page refreshes live: Firestore listeners when configured, 20 second pollin
 - **A, backend:** Firebase project and config, `src/lib/firebase.ts`, `src/lib/data.ts`, `src/lib/vouch.ts`, seed data, price change alerts.
 - **B, frontend:** nearby list, report form, category filter, borough forum, Vercel deploy. Add more shadcn components with `npx shadcn@latest add <name>`.
 - **C, Gemini:** done, see above. `src/lib/gemini.ts`, `src/lib/grounding.ts`, `src/lib/receipt.ts`, `src/app/api/chat`, `src/app/api/receipt`.
-- **D, Photon:** `src/app/api/photon/route.ts` webhook, text parsing into `submitReport`, batched alerts from `getActiveEvents`.
+- **D, Photon:** done, see above. `src/lib/texting.ts`, `src/app/api/text`, `bot/`.
 
 Put your own code in your own folders so merges stay boring. Pull `main` often.
 

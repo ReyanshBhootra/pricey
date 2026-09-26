@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 import { Nav } from "@/components/nav";
 
 const geistSans = Geist({
@@ -35,7 +36,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Nav />
         <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">{children}</main>
         <footer className="mx-auto w-full max-w-2xl px-4 py-6 text-xs text-muted-foreground">
-          Pricey. Prices reported by New Yorkers, trusted by vouching. NYC only.
+          Pricey. Prices reported by New Yorkers, trusted by vouching. NYC only.{" "}
+          <Link href="/text" className="underline-offset-2 hover:underline">Text Pricey</Link>
         </footer>
       </body>
     </html>

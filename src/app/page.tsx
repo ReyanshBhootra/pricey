@@ -5,6 +5,7 @@ import { chipClass } from "@/components/chip";
 import { ItemSearch } from "@/components/item-search";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LocationPicker } from "@/components/location-picker";
+import { ShowMore } from "@/components/show-more";
 import { TrackedAlerts } from "@/components/tracked-alerts";
 import { Card } from "@/components/ui/card";
 import { getActiveEvents, getItems, getNearbyStores, getPriceChanges, getPricesForStores, getStores } from "@/lib/data";
@@ -121,15 +122,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
                     <Link href={`/report?store=${s.id}`} className="text-primary hover:underline">Add one</Link>
                   </p>
                 ) : (
-                  <>
-                    <ul className="divide-y text-sm">{list.slice(0, 5).map(row)}</ul>
-                    {list.length > 5 && (
-                      <details className="text-sm">
-                        <summary className="cursor-pointer list-none pt-1 text-primary">{list.length - 5} more</summary>
-                        <ul className="divide-y">{list.slice(5).map(row)}</ul>
-                      </details>
-                    )}
-                  </>
+                  <ShowMore className="divide-y text-sm">{list.map(row)}</ShowMore>
                 )}
               </Card>
             </li>

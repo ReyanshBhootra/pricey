@@ -61,7 +61,8 @@ export function Chat() {
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col">
+    // Fill the screen below the title so the message box sits at the bottom, like a chat app.
+    <div className="flex min-h-[calc(100dvh-11rem)] flex-col">
       {messages.length === 0 && (
         <div className="mb-4 rounded-xl border bg-card p-4 shadow-xs">
           <p className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
@@ -104,7 +105,7 @@ export function Chat() {
           e.preventDefault();
           ask(input);
         }}
-        className="sticky bottom-0 mt-4 flex gap-2 bg-background py-3"
+        className="sticky bottom-0 mt-4 flex gap-2 bg-background pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
         <Input value={input} onChange={(e) => setInput(e.target.value)} maxLength={500} placeholder="Ask about prices near you" aria-label="Your question" className="h-11 bg-card" />
         <Button type="submit" size="icon" className="size-11 shrink-0" disabled={busy || !input.trim()} aria-label="Send">

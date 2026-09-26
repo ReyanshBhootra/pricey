@@ -5,6 +5,9 @@
 
 /* shadcn/ui tokens. Primary is Pricey green. */
 :root {
+  /* Tells the browser which theme we are in, so native dropdowns, date pickers,
+     autocomplete lists, checkboxes, and scrollbars match instead of staying light. */
+  color-scheme: light;
   --radius: 0.75rem;
   --background: oklch(0.985 0.002 106);
   --foreground: oklch(0.18 0 0);
@@ -30,6 +33,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    color-scheme: dark;
     --background: oklch(0.15 0 0);
     --foreground: oklch(0.95 0 0);
     --card: oklch(0.2 0 0);
@@ -88,5 +92,14 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Belt and braces for native select popups on every browser. */
+  option,
+  optgroup {
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+  }
+  summary::-webkit-details-marker {
+    display: none;
   }
 }

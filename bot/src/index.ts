@@ -18,9 +18,26 @@ if (!useTerminal && !(process.env.PROJECT_ID && process.env.PROJECT_SECRET)) {
   throw new Error("Set PROJECT_ID and PROJECT_SECRET in bot/.env, or run `bun run terminal` to test without a phone.");
 }
 
-const app = useTerminal
-  ? await Spectrum({ providers: [terminal.config()] })
-  : await Spectrum({ projectId: process.env.PROJECT_ID!, projectSecret: process.env.PROJECT_SECRET!, providers: [imessage.config()] });
+async function connect() {
+  try {
+    return useTerminal
+      ? await Spectrum({ providers: [terminal.config()] })
+      : await Spectrum({ projectId: process.env.PROJECT_ID!, projectSecret: process.env.PROJECT_SECRET!, providers: [imessage.config()] });
+  } catch (e) {
+    console.error(`
+Could not connect to Photon: ${e instanceof Error ? e.message : e}
+
+Check:
+  - PROJECT_ID and PROJECT_SECRET in bot/.env match your project at app.photon.codes
+    (run npm run setup again to fix them)
+  - your phone is added in the Photon dashboard (avatar menu, top right)
+  - this computer is online
+`);
+    process.exit(1);
+  }
+}
+
+const app = await connect();
 
 const auth = { Authorization: `Bearer ${SECRET}` };
 

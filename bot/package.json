@@ -4,14 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "bun src/index.ts",
-    "terminal": "bun src/index.ts --terminal"
+    "setup": "node setup.mjs",
+    "start": "tsx --env-file-if-exists=.env src/index.ts",
+    "terminal": "tsx --env-file-if-exists=.env src/index.ts --terminal",
+    "test": "bun test"
   },
   "dependencies": {
     "spectrum-ts": "12.10.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsx": "^4.23.0"
   }
 }

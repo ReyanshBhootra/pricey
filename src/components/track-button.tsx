@@ -3,6 +3,8 @@
 import { Bell, BellRing } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+import { syncListsAction } from "@/lib/actions";
+import { signedIn } from "./account-sync";
 
 // Tracked items live in this browser only. Alerts show on the Nearby page,
 // and as a browser notification when permission is granted.
@@ -54,6 +56,7 @@ export function TrackButton({ itemId }: { itemId: string }) {
       localStorage.setItem(TRACK_KEY, JSON.stringify(list));
     } catch {}
     window.dispatchEvent(new Event(EVENT));
+    if (signedIn()) void syncListsAction({ tracked: list });
   };
 
   return (

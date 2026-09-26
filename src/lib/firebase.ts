@@ -14,6 +14,11 @@ export const firebaseEnabled = Boolean(config.apiKey && config.projectId);
 
 let db: Firestore | null = null;
 
+export function getFirebaseApp() {
+  if (!firebaseEnabled) return null;
+  return getApps().length ? getApp() : initializeApp(config);
+}
+
 // Returns null when Firebase env vars are missing, so the app runs on seed data.
 export function getDb(): Firestore | null {
   if (!firebaseEnabled) return null;
@@ -31,4 +36,5 @@ export const COLLECTIONS = {
   forumPosts: "forumPosts",
   priceChanges: "priceChanges",
   users: "users",
+  aliases: "aliases",
 } as const;

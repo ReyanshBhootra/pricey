@@ -48,6 +48,15 @@ service cloud.firestore {
         && recent(request.resource.data.timestamp);
     }
 
+    // Profiles and account links. Written only through the Pricey server; tighten with
+    // Firebase Admin before launching publicly.
+    match /users/{id} {
+      allow read, write: if true;
+    }
+    match /aliases/{id} {
+      allow read, create: if true;
+    }
+
     match /forumPosts/{id} {
       allow read: if true;
       allow create: if request.resource.data.keys().hasOnly(['borough', 'text', 'timestamp', 'userId'])

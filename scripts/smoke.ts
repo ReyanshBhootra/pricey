@@ -3,7 +3,7 @@
 //   npm run smoke
 import assert from "node:assert/strict";
 import { getNearbyStores, getPricesForItem, getActiveEvents, submitReport } from "../src/lib/data";
-import { trustedPrice } from "../src/lib/vouch";
+import { computeTrust, setTrustWeights, trustedPrice } from "../src/lib/vouch";
 import { answerFromData, buildContext, matchItems } from "../src/lib/grounding";
 import { SEED_ITEMS } from "../src/lib/seed";
 
@@ -49,6 +49,24 @@ async function main() {
   assert.match(answerFromData("is that the cheapest?", await buildContext("how much are eggs\nis that the cheapest?")), /^Eggs/, "follow-up keeps the item");
   assert.match(answerFromData("i am hungry and have paneer and an airfryer, what can i make", await buildContext("i am hungry, what can i make")), /cheap meal/, "hungry/make questions get a meal");
   assert.match(answerFromData("any free food right now", await buildContext("any free food right now")), /deals right now/);
+
+  // Trust: people who usually match the crowd count more, people who are usually off count less.
+  const rep = (user: string, item: string, store: string, price: number, ts = 1) => ({ id: "", itemId: item, storeId: store, price, timestamp: ts, userId: user, type: "price" as const });
+  const history = [];
+  for (const item of ["a", "b", "c"]) {
+    for (const u of ["good1", "good2", "crowd1", "crowd2"]) history.push(rep(u, item, "s1", 4));
+    for (const u of ["liar1", "liar2", "liar3"]) history.push(rep(u, item, "s1", 1));
+  }
+  const stats = computeTrust(history);
+  assert.equal(stats.get("good1")?.weight, 1.5);
+  assert.equal(stats.get("liar1")?.weight, 0.5);
+  setTrustWeights(new Map([...stats].map(([u, st]) => [u, st.weight])));
+  const contested = [rep("good1", "x", "s2", 5), rep("good2", "x", "s2", 5), rep("liar1", "x", "s2", 2), rep("liar2", "x", "s2", 2), rep("liar3", "x", "s2", 2)];
+  assert.equal(trustedPrice(contested)?.price, 5, "2 reliable reporters outweigh 3 unreliable ones");
+  assert.equal(trustedPrice(contested, false)?.price, 2, "without trust, the raw majority would win");
+  assert.equal(trustedPrice(contested)?.votes, 2, "shown votes still count people");
+  setTrustWeights(new Map());
+  console.log("trust: 2 reliable voices beat 3 unreliable ones");
 
   console.log("OK");
   process.exit(0);

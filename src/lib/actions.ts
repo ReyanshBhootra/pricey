@@ -1,22 +1,15 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { actingUserId, sessionUserId } from "./session";
+import { findPlace, placeFromZip } from "./places";
 import { revalidatePath } from "next/cache";
-import { addItem, addStore, createForumPost, submitReport } from "./data";
+import { addItem, addStore, createForumPost, saveUser, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
 import { dealsDigest, handleText, postDeal } from "./texting";
-import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult } from "./types";
+import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
 
-// Anonymous per-browser id so reports and posts have a userId without login.
-async function userId() {
-  const jar = await cookies();
-  let id = jar.get("pricey_uid")?.value;
-  if (!id) {
-    id = `web-${crypto.randomUUID()}`;
-    jar.set("pricey_uid", id, { maxAge: 60 * 60 * 24 * 365, httpOnly: true, sameSite: "lax" });
-  }
-  return id;
-}
+// Reports and posts belong to the logged-in account, or to this browser until they log in.
+const userId = actingUserId;
 
 export type ReportState = { ok: true; result: SubmitResult } | { ok: false; error: string } | null;
 
@@ -87,11 +80,45 @@ export async function submitReceiptAction(store: { storeId: string | null; newSt
   }
 }
 
+export type ProfileState = { ok: true } | { ok: false; error: string } | null;
+
+// Name, email, and home for the logged-in account.
+export async function saveProfileAction(_prev: ProfileState, form: FormData): Promise<ProfileState> {
+  const id = await sessionUserId();
+  if (!id) return { ok: false, error: "Please log in again." };
+  const get = (k: string) => String(form.get(k) ?? "").trim();
+  const firstName = get("firstName").slice(0, 40);
+  const lastName = get("lastName").slice(0, 40);
+  const email = get("email").slice(0, 120);
+  const zip = get("zip");
+  if (!firstName) return { ok: false, error: "What should Pricey call you?" };
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: "That email doesn't look right (it's optional, you can leave it empty)." };
+  let home: UserProfile["home"] | undefined;
+  if (zip) {
+    const p = placeFromZip(zip) ?? findPlace(zip);
+    if (!p) return { ok: false, error: "Use a 5-digit NYC ZIP code, like 11215." };
+    home = { label: p.label, lat: p.lat, lng: p.lng, borough: p.borough };
+  }
+  await saveUser(id, { firstName, lastName: lastName || undefined, email: email || undefined, home });
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// Keeps tracked items and starred stores in the account, so they follow you across devices.
+export async function syncListsAction(lists: { tracked?: string[]; favorites?: string[] }) {
+  const id = await sessionUserId();
+  if (!id) return;
+  const clean = (v?: string[]) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === "string"))].slice(0, 100) : undefined);
+  await saveUser(id, { tracked: clean(lists.tracked), favorites: clean(lists.favorites) });
+}
+
 // The /text simulator: same handler and brain as the real iMessage line.
 export async function simulateTextAction(text: string): Promise<{ reply: string; react: string | null; contactCard: boolean; alert: string | null }> {
   const clean = String(text ?? "").slice(0, 500);
   if (!clean.trim()) return { reply: "Say something! Ask me what anything costs.", react: null, contactCard: false, alert: null };
-  const r = await handleText(`sim-${await userId()}`, clean, { channel: "web" });
+  // Logged in: the simulator is your real account (same profile as your iMessage).
+  const account = await sessionUserId();
+  const r = await handleText(account ?? `sim-${await userId()}`, clean, { channel: "web", userId: account ?? undefined });
   revalidatePath("/", "layout");
   // On the real line, alerts arrive later as one bundled text. Here we show one right away.
   const alert = r.action && "subscribe" in r.action ? await dealsDigest(r.action.subscribe === "all" ? null : r.action.subscribe) : null;

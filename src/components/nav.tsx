@@ -1,6 +1,6 @@
 "use client";
 
-import { MapPin, MessagesSquare, Plus, Sparkles } from "lucide-react";
+import { CircleUserRound, MapPin, MessagesSquare, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ const LINKS = [
   { href: "/forum", label: "Forum", icon: MessagesSquare },
 ];
 
-export function Nav() {
+export function Nav({ signedIn }: { signedIn: boolean }) {
   const path = usePathname();
   return (
     <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
@@ -28,7 +28,7 @@ export function Nav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 transition-colors sm:px-3",
+                  "inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 transition-colors sm:px-3",
                   active ? "bg-foreground text-background" : "hover:bg-accent",
                 )}
               >
@@ -37,6 +37,16 @@ export function Nav() {
               </Link>
             );
           })}
+          <Link
+            href={signedIn ? "/profile" : "/login"}
+            aria-label={signedIn ? "Your profile" : "Log in"}
+            className={cn(
+              "ml-0.5 grid size-8 place-items-center rounded-full transition-colors sm:size-9",
+              path.startsWith("/profile") || path.startsWith("/login") ? "bg-foreground text-background" : "hover:bg-accent",
+            )}
+          >
+            <CircleUserRound className={cn("size-5", signedIn && "text-primary")} />
+          </Link>
         </nav>
       </div>
     </header>

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { Map as MapboxMap, Marker } from "mapbox-gl";
 import { Button } from "@/components/ui/button";
+import { syncListsAction } from "@/lib/actions";
+import { signedIn } from "./account-sync";
 import { miles } from "@/lib/format";
 import type { MapStore } from "@/lib/map-data";
 import type { Category } from "@/lib/types";
@@ -64,6 +66,7 @@ function useFavorites(): [string[], (id: string) => void] {
       localStorage.setItem(FAV_KEY, JSON.stringify(next));
     } catch {}
     window.dispatchEvent(new Event(FAV_EVENT));
+    if (signedIn()) void syncListsAction({ favorites: next });
   };
   return [list, toggle];
 }

@@ -23,6 +23,7 @@ export interface Incoming {
   spaceId?: string; // iMessage conversation id, so Pricey can text them first later
   attachments?: { mimeType: string; data: Buffer; name?: string }[];
   model?: ModelCall; // tests swap Gemini for a scripted stand-in
+  userId?: string; // already-known account (logged-in website user in the simulator)
 }
 
 // Kept for the relay and tests; the id itself comes from phone.ts.
@@ -223,15 +224,16 @@ export async function handleTextRules(from: string, raw: string): Promise<TextRe
   return none(await answerQuestion(text));
 }
 
-const WELCOME =
-  "Hey! I'm Pricey. I keep track of what food really costs around NYC, thanks to people like you. Ask me how much something is, or tell me a price you just paid. What's your ZIP? I'll find stuff close by.";
+// Backup welcome for when Gemini is down (Gemini writes its own otherwise).
+const welcome = (u: UserProfile) =>
+  `Hey${u.firstName ? ` ${u.firstName}` : ""}! I'm Pricey. I keep track of what food really costs around NYC, thanks to people like you. Ask me how much something is, or tell me a price you just paid.${u.home ? "" : " What's your ZIP? I'll find stuff close by."}`;
 
 const addTurn = (recent: ChatTurn[] | undefined, ...turns: ChatTurn[]) => [...(recent ?? []), ...turns].slice(-8);
 
 // Every text, from iMessage or the /text simulator, comes through here.
 export async function handleText(from: string, raw: string, incoming: Incoming = {}): Promise<TextReply> {
   const channel = incoming.channel ?? "imessage";
-  const id = phoneUserId(from);
+  const id = incoming.userId ?? phoneUserId(from);
   const user: UserProfile = (await getUser(id)) ?? { id };
   const first = !user.welcomedAt;
   const now = Date.now();
@@ -297,10 +299,10 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
       patch.home = { label: place.label, lat: place.lat, lng: place.lng, borough: place.borough };
       out = { reply: `Got it, ${place.label} (${place.borough}). I'll use that for distances. Ask me how much anything is!`, react: "👍", action: null };
     } else if (first && /^(hi|hey|hello|yo|sup|start|help|\?)\W*$/i.test(text)) {
-      out = { reply: WELCOME, action: null };
+      out = { reply: welcome(user), action: null };
     } else {
       out = await handleTextRules(from, text);
-      if (first) out.reply = `${WELCOME}\n\n${out.reply}`;
+      if (first) out.reply = `${welcome(user)}\n\n${out.reply}`;
     }
     out.source = "rules";
     if (out.action && "subscribe" in out.action) patch.alerts = { area: out.action.subscribe, since: now };

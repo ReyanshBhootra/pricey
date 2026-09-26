@@ -29,7 +29,7 @@ import type {
   SubmitResult,
   TrustedPrice,
 } from "./types";
-import { distanceKm, trustedPrice, trustedPricesByItem, trustedPricesByStore } from "./vouch";
+import { computeTrust, distanceKm, setTrustWeights, trustedPrice, trustedPricesByItem, trustedPricesByStore, type TrustStats } from "./vouch";
 
 // ---------- in-memory fallback ----------
 
@@ -42,6 +42,7 @@ const seedMem = {
   forumPosts: [...SEED_FORUM_POSTS],
   priceChanges: [] as PriceChange[],
   users: {} as Record<string, UserProfile>,
+  aliases: {} as Record<string, string>,
 };
 const mem = (g.__priceyMem ??= seedMem);
 
@@ -53,9 +54,62 @@ async function all<T>(db: Firestore | null, name: keyof typeof mem): Promise<T[]
 
 async function reportsWhere(field: "itemId" | "storeId", value: string): Promise<Report[]> {
   const db = getDb();
-  if (!db) return mem.reports.filter((r) => r[field] === value);
-  const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where(field, "==", value)));
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
+  let rows: Report[];
+  if (!db) rows = mem.reports.filter((r) => r[field] === value);
+  else {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where(field, "==", value)));
+    rows = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
+  }
+  return withPeople(rows);
+}
+
+// ---------- people behind reports: account aliases and trust ----------
+
+// Anonymous browser ids that belong to an account ("web-123" -> "text-abc"), cached 30s.
+let aliasCache: { at: number; map: Promise<Map<string, string>> } | null = null;
+export function getAliases(): Promise<Map<string, string>> {
+  if (!aliasCache || Date.now() - aliasCache.at > 30_000) {
+    const db = getDb();
+    const map = db
+      ? getDocs(collection(db, COLLECTIONS.aliases)).then((snap) => new Map(snap.docs.map((d) => [d.id, String(d.data().userId)])))
+      : Promise.resolve(new Map(Object.entries(mem.aliases)));
+    aliasCache = { at: Date.now(), map };
+    map.catch(() => (aliasCache = null));
+  }
+  return aliasCache.map;
+}
+
+// Everything this browser did before logging in now belongs to the account.
+export async function addAlias(fromId: string, toId: string) {
+  if (!fromId || fromId === toId) return;
+  const db = getDb();
+  if (!db) mem.aliases[fromId] = toId;
+  else await setDoc(doc(db, COLLECTIONS.aliases, fromId), { userId: toId, at: Date.now() });
+  aliasCache = null;
+  trustAt = 0;
+}
+
+let trustAt = 0;
+let trustStats = new Map<string, TrustStats>();
+async function refreshTrust(aliases: Map<string, string>) {
+  if (Date.now() - trustAt < 60_000) return;
+  trustAt = Date.now();
+  const db = getDb();
+  const raw = db ? (await getDocs(collection(db, COLLECTIONS.reports))).docs.map((d) => d.data() as Report) : mem.reports;
+  trustStats = computeTrust(raw.map((r) => (aliases.has(r.userId) ? { ...r, userId: aliases.get(r.userId)! } : r)));
+  setTrustWeights(new Map([...trustStats].map(([u, s]) => [u, s.weight])));
+}
+
+// Reports with anonymous ids mapped to their account, and trust weights up to date.
+async function withPeople(rows: Report[]): Promise<Report[]> {
+  const aliases = await getAliases();
+  await refreshTrust(aliases);
+  return aliases.size ? rows.map((r) => (aliases.has(r.userId) ? { ...r, userId: aliases.get(r.userId)! } : r)) : rows;
+}
+
+export async function getTrustStats(userId: string): Promise<TrustStats | null> {
+  await refreshTrust(await getAliases());
+  return trustStats.get(userId) ?? null;
 }
 
 // ---------- reads ----------
@@ -96,8 +150,8 @@ export async function getNearbyStores(lat: number, lng: number, radiusKm = 3): P
 }
 
 // Every report (for grounding the chatbot on the whole city in one read).
-export function getAllReports(): Promise<Report[]> {
-  return all<Report>(getDb(), "reports");
+export async function getAllReports(): Promise<Report[]> {
+  return withPeople(await all<Report>(getDb(), "reports"));
 }
 
 // Trusted price of one item at every store that has reports, cheapest first.
@@ -121,6 +175,7 @@ export async function getPricesForStores(storeIds: string[], category?: Category
       reports.push(...snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report));
     }
   }
+  reports = await withPeople(reports);
   const items = category ? await getItems() : [];
   const allowed = category ? new Set(items.filter((i) => i.category === category).map((i) => i.id)) : null;
 
@@ -151,11 +206,27 @@ export async function getPriceChanges(opts: { hours?: number; itemIds?: string[]
 }
 
 // Everything one person reported (for stale-price check-ins).
-export async function getReportsForUser(userId: string): Promise<Report[]> {
+// This person's own ids, read fresh (not from the 30 second cache) so a report made right
+// before logging in shows up right after.
+async function idsOf(userId: string): Promise<string[]> {
   const db = getDb();
-  if (!db) return mem.reports.filter((r) => r.userId === userId);
-  const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("userId", "==", userId)));
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
+  if (!db) return [userId, ...Object.entries(mem.aliases).filter(([, to]) => to === userId).map(([from]) => from)];
+  const snap = await getDocs(query(collection(db, COLLECTIONS.aliases), where("userId", "==", userId)));
+  return [userId, ...snap.docs.map((d) => d.id)];
+}
+
+export async function getReportsForUser(userId: string): Promise<Report[]> {
+  const ids = await idsOf(userId);
+  const db = getDb();
+  let rows: Report[] = [];
+  if (!db) rows = mem.reports.filter((r) => ids.includes(r.userId));
+  else {
+    for (let i = 0; i < ids.length; i += 30) {
+      const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("userId", "in", ids.slice(i, i + 30))));
+      rows.push(...snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report));
+    }
+  }
+  return rows.map((r) => ({ ...r, userId }));
 }
 
 // Raw reports for a store (price and event), newest first.

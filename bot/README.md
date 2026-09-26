@@ -19,7 +19,7 @@ The relay has to keep running for texts to get answers. Close it and Pricey stop
 
 1. **Add your phone:** avatar menu (top right) → add your phone number and confirm the code.
 2. **Allow testers:** on the free plan, only phones added as **users** in your project can text Pricey. Add any teammate or judge phone you want to demo with.
-3. **Get your two keys**, the project ID and the project secret (starts with `spk_`). Easiest way: run the command Photon showed you in any empty folder, then open the `.env` file it creates:
+3. **Get your two keys**, the project ID and the project secret. Easiest way: run the command Photon showed you in any empty folder, then open the `.env` file it creates:
    ```bash
    npm create spectrum-project@latest photon-keys -- --projectId YOUR_PROJECT_ID --providers imessage --yes
    ```

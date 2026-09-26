@@ -23,7 +23,7 @@ const ask = async (question, fallback = "") => {
 console.log("\nPricey iMessage setup. Press Enter to keep a value in [brackets].\n");
 console.log("Find these at app.photon.codes, in your Pricey project (or run: npx @photon-ai/cli projects secret).");
 const projectId = await ask("1/3  Photon PROJECT_ID", old.PROJECT_ID);
-const projectSecret = await ask("2/3  Photon PROJECT_SECRET (starts with spk_)", old.PROJECT_SECRET);
+const projectSecret = await ask("2/3  Photon PROJECT_SECRET", old.PROJECT_SECRET);
 const priceyUrl = await ask("3/3  Your Pricey website", old.PRICEY_URL || "https://pricey-nine.vercel.app");
 rl.close();
 
@@ -31,7 +31,6 @@ if (!projectId || !projectSecret) {
   console.error("\nNeed both the project ID and the secret. Run npm run setup again when you have them.");
   process.exit(1);
 }
-if (!projectSecret.startsWith("spk_")) console.warn("\nHeads up: Photon secrets usually start with spk_. Double check it if the relay fails to connect.");
 
 const textBotSecret = old.TEXT_BOT_SECRET || randomBytes(24).toString("hex");
 writeFileSync(

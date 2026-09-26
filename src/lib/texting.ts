@@ -141,7 +141,8 @@ export async function postDeal(d: { userId: string; storeId: string; what: strin
 }
 
 const TEXT_PROMPT = `${SYSTEM_PROMPT}
-- This is a text message. Reply in under 60 words. At most 3 list items. No links.`;
+- This is a text message. Reply in under 60 words. At most 3 list items. No links.
+- Distances in DATA are measured from the center of the borough the texter named, not from the texter. Never mention distances; name the store and its neighborhood instead.`;
 
 async function answerQuestion(text: string): Promise<string> {
   const borough = findBorough(text);

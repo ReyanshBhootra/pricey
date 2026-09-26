@@ -30,7 +30,11 @@ export function Chat() {
   const spot = useRef<Promise<{ lat: number; lng: number } | null> | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [messages, busy]);
+  // Braces matter: newer Chrome returns a Promise from scrollIntoView, and React would
+  // call anything returned here as a cleanup function when you leave the page.
+  useEffect(() => {
+    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, busy]);
 
   const ask = async (text: string) => {
     const q = text.trim();

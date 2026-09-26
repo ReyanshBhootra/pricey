@@ -29,10 +29,13 @@ export async function POST(req: Request) {
       const res = await gemini().models.generateContent({
         model: GEMINI_MODEL,
         contents: messages.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })),
-        config: { systemInstruction: `${SYSTEM_PROMPT}\n\nDATA:\n${ctx.text}`, temperature: 0.3, maxOutputTokens: 600 },
+        // No maxOutputTokens: Flash models "think" first and that counts toward the cap, so a
+        // tight cap can leave an empty answer on longer questions. The prompt keeps replies short.
+        config: { systemInstruction: `${SYSTEM_PROMPT}\n\nDATA:\n${ctx.text}`, temperature: 0.4 },
       });
       const reply = res.text?.replace(/\*\*/g, "").trim();
       if (reply) return Response.json({ reply, source: "gemini" });
+      console.error("Gemini chat returned no text, answering from data. finishReason:", res.candidates?.[0]?.finishReason, "blockReason:", res.promptFeedback?.blockReason);
     } catch (e) {
       console.error("Gemini chat failed, answering from data:", e instanceof Error ? e.message : e);
     }

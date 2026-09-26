@@ -47,6 +47,7 @@ async function main() {
   const convo = await buildContext("how much are eggs near me\nwhat can I cook for under $10");
   assert.match(answerFromData("what can I cook for under $10", convo), /cheap meal/, "new intent wins over earlier item");
   assert.match(answerFromData("is that the cheapest?", await buildContext("how much are eggs\nis that the cheapest?")), /^Eggs/, "follow-up keeps the item");
+  assert.match(answerFromData("i am hungry and have paneer and an airfryer, what can i make", await buildContext("i am hungry, what can i make")), /cheap meal/, "hungry/make questions get a meal");
   assert.match(answerFromData("any free food right now", await buildContext("any free food right now")), /deals right now/);
 
   console.log("OK");

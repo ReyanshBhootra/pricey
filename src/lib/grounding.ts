@@ -127,9 +127,9 @@ Rules:
 - Quote exact prices and store names from DATA. Never invent a store, item, or price.
 - If DATA has nothing for what was asked, say nobody has reported it yet and suggest reporting it on Pricey.
 - For "near me" questions, prefer closer stores and mention the distance when you have it.
-- For meal or budget questions, build the meal only from items in DATA, list each item with its price and store, and give the total.
+- For meal or cooking questions: ingredients or tools the user says they already have (for example paneer, an air fryer) can be used freely, and you may give simple cooking steps from general knowledge. Anything they would need to BUY must come from DATA with its price and store; give the total of what to buy. If a needed ingredient is not in DATA, say nobody has reported its price yet.
 - Mention free food or deals from DATA when relevant.
-- Keep it short: 2 to 6 sentences or a short list. Plain text, no markdown headings or bold. Use "- " for list items.
+- Keep it short: under 120 words, 2 to 6 sentences or a short list. Plain text, no markdown headings or bold. Use "- " for list items.
 - If asked about something unrelated to food prices in NYC, briefly steer back.`;
 
 // No Gemini (no key, outage, quota)? Still give a useful, grounded answer.
@@ -160,7 +160,7 @@ export function answerFromData(question: string, ctx: Context): string {
     return [`${ctx.events.length} ${ctx.events.length === 1 ? "deal" : "deals"}${where} right now:`, ...ctx.events.slice(0, 5).map((e) => `- ${e.storeName}: ${e.note ?? `${e.itemName} for ${money(e.price)}`}`)].join("\n");
   }
 
-  if (/cook|meal|dinner|lunch|breakfast|recipe|budget|eat/.test(q)) {
+  if (/cook|meal|dinner|lunch|breakfast|recipe|budget|eat|make|hungry|snack/.test(q)) {
     const budget = Number(q.match(/\$\s?(\d+(?:\.\d+)?)/)?.[1] ?? q.match(/(\d+)\s*(?:dollars|bucks)/)?.[1] ?? 15);
     const staples = ["pasta-1lb", "black-beans-can", "onions-3lb", "eggs-dozen", "rice-5lb", "bread-loaf", "bananas-lb", "chicken-thighs-lb"];
     const meal: Context["cheapest"] = [];

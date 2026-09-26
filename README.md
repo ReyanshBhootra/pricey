@@ -68,7 +68,8 @@ Everyone imports from here. Do not talk to Firestore directly.
 
 - `/chat` (Ask in the nav): questions like "how much are eggs near me", "what can I cook for under $10", "any free food right now". Uses the person's location if they allowed it.
 - **Grounding** (`src/lib/grounding.ts`): `buildContext(question, location)` builds a fact sheet from our data (prices for items in the question with distance and vote counts, cheapest price per item nearby, active deals). Gemini gets it as `DATA` with a system prompt that forbids inventing prices. Grounds on the last 3 questions so follow-ups keep their item.
-- **Fallback:** if Gemini has no key, errors, or hits quota, `answerFromData` answers price, deal, and budget meal questions straight from the data. The demo never shows a dead chat.
+- **Speed and limits** (`src/lib/gemini.ts`): chat streams word by word from `gemini-flash-lite-latest` with thinking off; receipts use `gemini-flash-latest`. If a model is rate limited (free tier) or missing, the other one answers and the busy one rests. Hard time limits everywhere. Vercel logs one `Gemini <model> ok/busy/...` line per attempt.
+- **Fallback:** if Gemini has no key, errors, or hits quota on every model, `answerFromData` answers price, deal, and budget meal questions straight from the data, marked "Answered from price data". The demo never shows a dead chat.
 - `/scan` (linked from Report): photo is shrunk in the browser, sent to `/api/receipt`, Gemini returns JSON (schema enforced) with store and lines matched to our catalog. The server drops bad prices and unknown ids. The person reviews, edits, and unticks lines before anything is saved, then each line becomes a report (new items are created).
 - **Person D:** reuse `buildContext` + `SYSTEM_PROMPT` + `answerFromData` for replies to texts. Same grounding, same fallback.
 

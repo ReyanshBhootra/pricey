@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { inNyc } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Msg = { role: "user" | "assistant"; text: string };
+type Msg = { role: "user" | "assistant"; text: string; fromData?: boolean };
 
 const SUGGESTIONS = ["How much are eggs near me?", "What can I cook for under $10?", "Any free food right now?", "Where's the cheapest coffee?"];
 
@@ -66,6 +66,7 @@ export function Chat() {
         return;
       }
       // Show the answer word by word as it streams in.
+      const fromData = res.headers.get("X-Pricey-Source") === "data";
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let text = "";
@@ -73,10 +74,10 @@ export function Chat() {
         const { value, done } = await reader.read();
         if (done) break;
         text += decoder.decode(value, { stream: true });
-        setMessages([...next, { role: "assistant", text }]);
+        setMessages([...next, { role: "assistant", text, fromData }]);
       }
       text += decoder.decode();
-      setMessages([...next, { role: "assistant", text: text.trim() || "Something went wrong. Try asking again." }]);
+      setMessages([...next, { role: "assistant", text: text.trim() || "Something went wrong. Try asking again.", fromData }]);
     } catch (e) {
       const slow = e instanceof DOMException && e.name === "TimeoutError";
       setMessages([...next, { role: "assistant", text: slow ? "That took too long. Try asking again." : "I couldn't reach the server. Check your connection and try again." }]);
@@ -114,6 +115,7 @@ export function Chat() {
               )}
             >
               {m.text.replace(/\*\*/g, "")}
+              {m.fromData && <span className="mt-2 block text-xs text-muted-foreground">Answered from price data</span>}
             </p>
           </li>
         ))}

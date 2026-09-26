@@ -3,12 +3,11 @@ import { GoogleGenAI, type GenerateContentParameters, type GenerateContentRespon
 
 const unique = (xs: (string | undefined)[]) => [...new Set(xs.filter((x): x is string => Boolean(x)))];
 
-// Models to try, in order. Each has its own free-tier quota, so when one is rate limited or
-// unavailable the next one usually still answers. GEMINI_MODEL, if set, is tried first.
-// Chat: price lookups need speed more than depth, so the fast lite model leads.
-// Receipts: reading a photo benefits from the stronger model.
-export const CHAT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-lite-latest", "gemini-flash-latest"]);
-export const RECEIPT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-flash-lite-latest"]);
+// Models to try, in order. Each runs on its own capacity and free-tier quota, so when one is
+// overloaded, rate limited, or gone, the next one usually still answers. GEMINI_MODEL, if set,
+// is tried first. Chat leads with fast lite models; receipts lead with the stronger model.
+export const CHAT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-flash-latest"]);
+export const RECEIPT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"]);
 
 export const geminiEnabled = () => Boolean(process.env.GEMINI_API_KEY);
 
@@ -25,33 +24,45 @@ export function gemini(): GoogleGenAI {
 }
 
 type Req = Omit<GenerateContentParameters, "model">;
+type Opts = { models?: string[]; budgets?: number[]; startMs?: number };
 
-// Per server instance: the thinking budget each model accepted, and models resting after a
-// rate limit or "not found", so we don't spend a request on them for every question.
+// Per server instance: the thinking setting each model accepted, and models resting after
+// being overloaded, rate limited, slow, or missing, so later questions skip them for a while.
 const acceptedBudget = new Map<string, number | null>();
 const restingUntil = new Map<string, number>();
 
-function classify(e: unknown) {
+class SlowStart extends Error {}
+
+function classify(e: unknown, budget: number | null) {
   const msg = e instanceof Error ? e.message : String(e);
   const status = (e as { status?: number }).status;
-  if ((e as { name?: string }).name === "AbortError" || /aborted|timed? ?out/i.test(msg)) return { kind: "timeout" as const, msg };
-  if (status === 429 || status === 503 || /RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|quota/i.test(msg)) {
+  if (e instanceof SlowStart) return { kind: "slow" as const, msg, restMs: 60_000 };
+  if ((e as { name?: string }).name === "AbortError" || /aborted|timed? ?out/i.test(msg)) return { kind: "timeout" as const, msg, restMs: 0 };
+  if (status === 429 || status === 503 || /RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|high demand|quota/i.test(msg)) {
     const retryIn = Number(msg.match(/retry in ([\d.]+)s/i)?.[1] ?? 30);
     return { kind: "busy" as const, msg, restMs: Math.min(Math.max(retryIn, 5), 120) * 1000 };
   }
-  if (status === 404 || /not found|is not supported for/i.test(msg)) return { kind: "missing" as const, msg };
-  if (/thinking|budget/i.test(msg)) return { kind: "budget" as const, msg };
-  return { kind: "other" as const, msg };
+  if (status === 404 || /not found|is not supported for/i.test(msg)) return { kind: "missing" as const, msg, restMs: 10 * 60_000 };
+  // A 400 while we sent a thinking setting almost always means the model doesn't take that
+  // setting (some answer with a bare "invalid argument"). Try the same model without it.
+  if (budget !== null && (status === 400 || /thinking|budget|INVALID_ARGUMENT|invalid argument/i.test(msg))) return { kind: "setting" as const, msg, restMs: 0 };
+  return { kind: "other" as const, msg, restMs: 60_000 };
 }
 
-// Tries models in order and, for each, thinking budgets in order (ending with none, since a
-// model may refuse a budget). Rate limited or missing models are skipped and rested.
-// Everything shares one hard time limit. Throws if nothing answered.
-async function attempt<T>(models: string[], budgets: number[], timeoutMs: number, req: Req, run: (p: GenerateContentParameters) => Promise<T>): Promise<T> {
-  const started = Date.now();
-  const left = () => timeoutMs - (Date.now() - started);
+// Tries models in order and, for each, thinking settings in order (ending with none). Each
+// attempt must start answering within startMs or we move on. One overall time limit.
+async function attempt<T>(
+  models: string[],
+  budgets: number[],
+  timeoutMs: number,
+  startMs: number,
+  req: Req,
+  run: (p: GenerateContentParameters, started: () => void) => Promise<T>,
+): Promise<T> {
+  const t0 = Date.now();
+  const left = () => timeoutMs - (Date.now() - t0);
   const awake = models.filter((m) => (restingUntil.get(m) ?? 0) < Date.now());
-  const order = awake.length ? awake : models; // all resting: try anyway rather than give up
+  const order = awake.length ? awake : models; // everything resting: try anyway rather than give up
   let lastError: unknown = new Error("No Gemini model available");
 
   for (const model of order) {
@@ -60,29 +71,37 @@ async function attempt<T>(models: string[], budgets: number[], timeoutMs: number
     const tries = known !== undefined && all.includes(known) ? all.slice(all.indexOf(known)) : all;
     for (const budget of tries) {
       if (left() < 1500) throw lastError;
-      const t0 = Date.now();
+      const a0 = Date.now();
+      // Abort if the model hasn't started answering in time; once it has, only the overall limit applies.
+      const slow = new AbortController();
+      const timer = setTimeout(() => slow.abort(new SlowStart(`no answer within ${startMs} ms`)), Math.min(startMs, left()));
       try {
-        const out = await run({
-          ...req,
-          model,
-          config: {
-            ...req.config,
-            ...(budget !== null ? { thinkingConfig: { thinkingBudget: budget } } : {}),
-            abortSignal: AbortSignal.timeout(left()),
+        const out = await run(
+          {
+            ...req,
+            model,
+            config: {
+              ...req.config,
+              ...(budget !== null ? { thinkingConfig: { thinkingBudget: budget } } : {}),
+              abortSignal: AbortSignal.any([AbortSignal.timeout(left()), slow.signal]),
+            },
           },
-        });
+          () => clearTimeout(timer),
+        );
+        clearTimeout(timer);
         acceptedBudget.set(model, budget);
         restingUntil.delete(model);
-        console.log(`Gemini ${model} ok in ${Date.now() - t0} ms (thinking ${budget ?? "default"})`);
+        console.log(`Gemini ${model} ok, first words in ${Date.now() - a0} ms (thinking ${budget ?? "default"})`);
         return out;
-      } catch (e) {
+      } catch (err) {
+        clearTimeout(timer);
+        const e = slow.signal.aborted ? slow.signal.reason : err;
         lastError = e;
-        const why = classify(e);
-        console.warn(`Gemini ${model} ${why.kind} after ${Date.now() - t0} ms (thinking ${budget ?? "default"}): ${why.msg.slice(0, 200)}`);
+        const why = classify(e, budget);
+        console.warn(`Gemini ${model} ${why.kind} after ${Date.now() - a0} ms (thinking ${budget ?? "default"}): ${why.msg.slice(0, 200)}`);
         if (why.kind === "timeout") throw e;
-        if (why.kind === "budget") continue; // same model, next budget
-        if (why.kind === "busy") restingUntil.set(model, Date.now() + why.restMs);
-        if (why.kind === "missing") restingUntil.set(model, Date.now() + 10 * 60 * 1000);
+        if (why.kind === "setting") continue; // same model, next thinking setting
+        restingUntil.set(model, Date.now() + why.restMs);
         break; // next model
       }
     }
@@ -91,19 +110,22 @@ async function attempt<T>(models: string[], budgets: number[], timeoutMs: number
 }
 
 // One-shot answer (receipts, texting). Small thinking budget by default.
-export function generate(req: Req, timeoutMs: number, opts: { models?: string[]; budgets?: number[] } = {}): Promise<GenerateContentResponse> {
-  return attempt(opts.models ?? RECEIPT_MODELS, opts.budgets ?? [512], timeoutMs, req, (p) => gemini().models.generateContent(p));
+export function generate(req: Req, timeoutMs: number, opts: Opts = {}): Promise<GenerateContentResponse> {
+  return attempt(opts.models ?? RECEIPT_MODELS, opts.budgets ?? [512], timeoutMs, opts.startMs ?? 30_000, req, (p) =>
+    gemini().models.generateContent(p),
+  );
 }
 
-// Streams text as Gemini writes it (chat). Resolves once the first text arrives, so a failure
-// before that can still fall back, then yields the rest. The time limit covers the whole answer.
-export function generateTextStream(req: Req, timeoutMs: number, opts: { models?: string[]; budgets?: number[] } = {}): Promise<AsyncGenerator<string>> {
-  return attempt(opts.models ?? CHAT_MODELS, opts.budgets ?? [0, 512], timeoutMs, req, async (p) => {
+// Streams text as Gemini writes it (chat). Resolves once the first words arrive, so a failure
+// before that can still move to another model or fall back, then yields the rest.
+export function generateTextStream(req: Req, timeoutMs: number, opts: Opts = {}): Promise<AsyncGenerator<string>> {
+  return attempt(opts.models ?? CHAT_MODELS, opts.budgets ?? [0], timeoutMs, opts.startMs ?? 9_000, req, async (p, started) => {
     const stream = await gemini().models.generateContentStream(p);
     let first: IteratorResult<GenerateContentResponse>;
     do first = await stream.next();
     while (!first.done && !first.value.text);
     if (first.done) throw new Error("Gemini returned no text");
+    started();
     const firstText = first.value.text!;
     return (async function* () {
       yield firstText;

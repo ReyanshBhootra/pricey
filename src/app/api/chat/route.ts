@@ -51,8 +51,10 @@ export async function POST(req: Request) {
               if (done) controller.close();
               else controller.enqueue(encoder.encode(value));
             } catch (e) {
-              // Cut off mid-answer (time limit): keep what was sent, end cleanly.
+              // Gemini broke off mid-answer (overloaded or out of time). Never leave a half
+              // sentence: say so and finish with the answer straight from the price data.
               console.error("Gemini stream stopped early:", e instanceof Error ? e.message : e);
+              controller.enqueue(encoder.encode(`\n\nGemini got busy mid-answer, so here it is straight from the price data:\n${answerFromData(question.text, ctx)}`));
               controller.close();
             }
           },

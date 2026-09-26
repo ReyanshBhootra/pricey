@@ -4,13 +4,18 @@
 // when Gemini is unavailable.
 
 import { getActiveEvents, getAllReports, getItems, getNearbyStores, getStores } from "./data";
-import { km, money, timeAgo } from "./format";
+import { kmToMiles, miles, money, timeAgo, walkMinutes } from "./format";
 import type { Item, Report, Store, TrustedPrice } from "./types";
 import { distanceKm, trustedPricesByStore } from "./vouch";
 
 export interface Located {
   lat: number;
   lng: number;
+  // Where distances are measured from, as people should read it: "11215", "Park Slope".
+  // Leave out for the person's own GPS position ("0.4 mi away").
+  label?: string;
+  // Only a borough center: good for ranking nearby stores, too vague to quote distances.
+  approximate?: boolean;
 }
 
 export interface PriceFact extends TrustedPrice {
@@ -25,6 +30,7 @@ export interface Context {
   cheapest: { item: Item; best: PriceFact }[];
   events: (Report & { storeName: string; itemName: string })[];
   located: boolean;
+  where: Located | null;
 }
 
 const words = (s: string) =>
@@ -64,6 +70,13 @@ function cityData() {
   return city.data;
 }
 
+// "0.6 mi from 11215, 12 min walk" or "0.4 mi away, 8 min walk".
+export function distanceText(km: number, where?: Located | null) {
+  const base = `${miles(km)} ${where?.label ? `from ${where.label}` : "away"}`;
+  // Past about 1.5 mi people take the subway or bus, so a walking time stops being useful.
+  return kmToMiles(km) <= 1.5 ? `${base}, ${walkMinutes(km)} min walk` : base;
+}
+
 export async function buildContext(question: string, where?: Located | null): Promise<Context> {
   const [[items, stores, reports], events] = await Promise.all([
     cityData(),
@@ -83,7 +96,7 @@ export async function buildContext(question: string, where?: Located | null): Pr
       ...p,
       storeName: s?.name ?? p.storeId,
       borough: s?.borough ?? "",
-      distanceKm: s && where ? distanceKm(where.lat, where.lng, s.lat, s.lng) : null,
+      distanceKm: s && where && !where.approximate ? distanceKm(where.lat, where.lng, s.lat, s.lng) : null,
     };
   };
   // Near the user, cheaper wins; far away stores only count if much cheaper.
@@ -111,11 +124,15 @@ export async function buildContext(question: string, where?: Located | null): Pr
   }));
 
   const line = (p: PriceFact) =>
-    `${money(p.price)} at ${p.storeName} (${p.borough}${p.distanceKm !== null ? `, ${km(p.distanceKm)} away` : ""}; ${p.votes} of ${p.totalReports} reporters agree; updated ${timeAgo(p.lastReportedAt)})`;
+    `${money(p.price)} at ${p.storeName} (${p.borough}${p.distanceKm !== null ? `, ${distanceText(p.distanceKm, where)}` : ""}; ${p.votes} of ${p.totalReports} reporters agree; updated ${timeAgo(p.lastReportedAt)})`;
 
   const text = [
     `Today: ${new Date().toDateString()}. City: New York City.`,
-    where ? `User location: lat ${where.lat.toFixed(3)}, lng ${where.lng.toFixed(3)}.` : "User location: unknown, answer city-wide.",
+    !where
+      ? "User location: unknown, answer city-wide."
+      : where.approximate
+        ? `User location: somewhere in ${where.label ?? "this borough"} (exact spot unknown, so never quote distances).`
+        : `User location: ${where.label ? `ZIP/area ${where.label}` : "their current position"}. Distances are in miles from there.`,
     "",
     mentioned.length ? "PRICES FOR ITEMS IN THE QUESTION (best value first):" : "No specific item from our list was named in the question.",
     ...mentioned.flatMap(({ item, prices }) => [`${item.name} [${item.category}]:`, ...(prices.length ? prices.map((p) => `  - ${line(p)}`) : ["  - no reports yet"])]),
@@ -127,7 +144,7 @@ export async function buildContext(question: string, where?: Located | null): Pr
     ...(ev.length ? ev.map((e) => `- ${e.storeName}: ${e.note ?? `${e.itemName} for ${money(e.price)}`} (${timeAgo(e.timestamp)})`) : ["- none reported"]),
   ].join("\n");
 
-  return { text, mentioned, cheapest, events: ev, located: Boolean(where) };
+  return { text, mentioned, cheapest, events: ev, located: Boolean(where), where: where ?? null };
 }
 
 export const SYSTEM_PROMPT = `You are Pricey, a friendly assistant for grocery and food prices in New York City.
@@ -145,7 +162,8 @@ Rules:
 // `question` is the latest message; ctx may also carry items from earlier questions.
 export function answerFromData(question: string, ctx: Context): string {
   const q = question.toLowerCase();
-  const where = ctx.located ? " near you" : "";
+  const w = ctx.where;
+  const where = !w ? "" : w.approximate ? ` in ${w.label ?? "your area"}` : w.label ? ` near ${w.label}` : " near you";
   const named = new Set(matchItems(question, ctx.mentioned.map((m) => m.item)).map((i) => i.id));
 
   const priceAnswer = (list: Context["mentioned"]) =>
@@ -156,7 +174,7 @@ export function answerFromData(question: string, ctx: Context): string {
         const top = (close.length ? close : prices)
           .slice()
           .sort((a, b) => a.price - b.price)
-          .slice(0, 3).map((p) => `${money(p.price)} at ${p.storeName}${p.distanceKm !== null ? ` (${km(p.distanceKm)})` : ""}`);
+          .slice(0, 3).map((p) => `${money(p.price)} at ${p.storeName}${p.distanceKm !== null ? ` (${distanceText(p.distanceKm, ctx.where)})` : ""}`);
         return `${item.name}${where}: ${top.join(", ")}.`;
       })
       .join("\n");

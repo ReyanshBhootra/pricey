@@ -24,6 +24,14 @@ export const DEFAULT_LOCATION = BOROUGH_CENTERS.Manhattan;
 
 export const inNyc = (lat: number, lng: number) => lat > 40.49 && lat < 40.92 && lng > -74.27 && lng < -73.68;
 
-export const km = (d: number) => (d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
+// Distances are kept in km internally; people see miles (feet when very close).
+export const kmToMiles = (km: number) => km * 0.621371;
+export function miles(km: number) {
+  const mi = kmToMiles(km);
+  if (mi < 0.1) return `${Math.max(50, Math.round((mi * 5280) / 50) * 50)} ft`;
+  return `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi`;
+}
+// About 20 minutes per mile on foot.
+export const walkMinutes = (km: number) => Math.max(1, Math.round(kmToMiles(km) * 20));
 
 export const hoursAgo = (h: number) => Date.now() - h * 60 * 60 * 1000;

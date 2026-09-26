@@ -9,7 +9,7 @@ import { ShowMore } from "@/components/show-more";
 import { TrackedAlerts } from "@/components/tracked-alerts";
 import { Card } from "@/components/ui/card";
 import { getActiveEvents, getItems, getNearbyStores, getPriceChanges, getPricesForStores, getStores } from "@/lib/data";
-import { DEFAULT_LOCATION, km, money, timeAgo } from "@/lib/format";
+import { DEFAULT_LOCATION, miles, money, timeAgo } from "@/lib/format";
 import { CATEGORIES, type Category, type TrustedPrice } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
   const loc = str("loc") ?? "Manhattan";
   const cat = CATEGORIES.includes(str("cat") as Category) ? (str("cat") as Category) : undefined;
 
-  // Stores within 3 km, or the 5 closest if that is too few.
+  // Stores within about 2 miles, or the 5 closest if that is too few.
   let nearby = await getNearbyStores(lat, lng, 3);
   if (nearby.length < 3) nearby = (await getNearbyStores(lat, lng, 100)).slice(0, 5);
 
@@ -113,7 +113,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
                     {s.name}
                   </Link>
                   <span className="shrink-0 text-xs text-muted-foreground">
-                    {km(s.distanceKm)} · {s.borough}
+                    {miles(s.distanceKm)} · {s.borough}
                   </span>
                 </div>
                 {list.length === 0 ? (

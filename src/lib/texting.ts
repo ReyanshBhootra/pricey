@@ -4,7 +4,8 @@
 
 import { createHash } from "node:crypto";
 import { addItem, getActiveEvents, getItems, getStores, submitReport } from "./data";
-import { BOROUGH_CENTERS, money, timeAgo } from "./format";
+import { money, timeAgo } from "./format";
+import { BOROUGH_PLACES, findPlace } from "./places";
 import { generate, geminiEnabled, CHAT_MODELS } from "./gemini";
 import { answerFromData, buildContext, matchItems, SYSTEM_PROMPT } from "./grounding";
 import type { Borough, Item, Report, Store } from "./types";
@@ -142,11 +143,14 @@ export async function postDeal(d: { userId: string; storeId: string; what: strin
 
 const TEXT_PROMPT = `${SYSTEM_PROMPT}
 - This is a text message. Reply in under 60 words. At most 3 list items. No links.
-- Distances in DATA are measured from the center of the borough the texter named, not from the texter. Never mention distances; name the store and its neighborhood instead.`;
+- Only quote a distance exactly as DATA gives it, including where it is measured from ("0.6 mi from 11215"). If DATA has no distances, don't make any up.`;
 
 async function answerQuestion(text: string): Promise<string> {
+  // A ZIP or neighborhood gives honest distances ("0.6 mi from 11215"); a borough alone is only for ranking.
+  const place = findPlace(text);
   const borough = findBorough(text);
-  const ctx = await buildContext(text, borough ? BOROUGH_CENTERS[borough] : null);
+  const where = place ? { lat: place.lat, lng: place.lng, label: place.label } : borough ? { ...BOROUGH_PLACES[borough], approximate: true } : null;
+  const ctx = await buildContext(text, where);
   if (geminiEnabled()) {
     try {
       const res = await generate(
@@ -160,10 +164,7 @@ async function answerQuestion(text: string): Promise<string> {
       console.error("Gemini text reply failed, answering from data:", e instanceof Error ? e.message : e);
     }
   }
-  // The location is a borough center, not the texter, so drop "near you" and distances.
-  return answerFromData(text, ctx)
-    .replace(/ near you/g, borough ? ` in ${borough}` : "")
-    .replace(/ \(\d+(?:\.\d)? k?m\)/g, "");
+  return answerFromData(text, ctx);
 }
 
 export async function handleText(from: string, raw: string): Promise<TextReply> {

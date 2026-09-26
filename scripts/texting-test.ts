@@ -2,6 +2,8 @@
 import assert from "node:assert/strict";
 import { SEED_STORES } from "../src/lib/seed";
 import { findBorough, findPrice, handleText, matchStore } from "../src/lib/texting";
+import { findPlace } from "../src/lib/places";
+import { miles } from "../src/lib/format";
 
 async function main() {
   // Prices: the right number, not sizes or times.
@@ -26,6 +28,17 @@ async function main() {
   assert.equal(store("some random place"), null);
 
   assert.equal(findBorough("deals in bk"), "Brooklyn");
+
+  // Places: ZIPs and neighborhoods, most specific wins; boroughs alone are not places.
+  assert.equal(findPlace("cheap eggs near 11215")?.label, "11215");
+  assert.equal(findPlace("anything near union sq?")?.label, "Union Square");
+  assert.equal(findPlace("im in park slope")?.borough, "Brooklyn");
+  assert.equal(findPlace("upper west side")?.label, "Upper West Side");
+  assert.equal(findPlace("in brooklyn"), null);
+  assert.equal(findPlace("90210"), null, "not NYC");
+  assert.equal(miles(1), "0.6 mi");
+  assert.equal(miles(0.1), "350 ft");
+  assert.equal(miles(20), "12 mi");
   assert.equal(findBorough("any free food on staten island"), "Staten Island");
 
   // End to end on seed data (no Gemini key: questions answer from data).
@@ -38,7 +51,9 @@ async function main() {
   assert.match(await say("deals in brooklyn"), /spots? in Brooklyn (has|have) discounts right now:[\s\S]*free bagels/i);
   const eggs = await say("how much are eggs in brooklyn?");
   assert.match(eggs, /^Eggs \(dozen\) in Brooklyn: \$\d/, eggs);
-  assert.doesNotMatch(eggs, /near you| m\)|km\)/, eggs);
+  assert.doesNotMatch(eggs, /near you|mi |km|walk/, eggs); // borough only: no made-up distances
+  const eggsZip = await say("how much are eggs near 11215?");
+  assert.match(eggsZip, /^Eggs \(dozen\) near 11215: \$\d.* mi from 11215, \d+ min walk\)/, eggsZip);
   const on = await handleText("+15551234567", "alerts on queens");
   assert.deepEqual(on.action, { subscribe: "Queens" });
   assert.deepEqual((await handleText("+15551234567", "stop")).action, { unsubscribe: true });

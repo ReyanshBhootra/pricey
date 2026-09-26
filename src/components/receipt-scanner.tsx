@@ -53,15 +53,15 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
       const blob = await shrink(file);
       const form = new FormData();
       form.append("photo", blob, blob === file ? file.name : "receipt.jpg");
-      const res = await fetch("/api/receipt", { method: "POST", body: form });
-      const data = await res.json();
+      const res = await fetch("/api/receipt", { method: "POST", body: form, signal: AbortSignal.timeout(65000) });
+      const data = await res.json().catch(() => ({ error: "Couldn't read that receipt right now. Try again." }));
       if (!res.ok) throw new Error(data.error ?? "Scan failed.");
       const parsed = data as ParsedReceipt;
       setLines(parsed.lines.map((l) => ({ ...l, keep: true, priceText: l.price.toFixed(2) })));
       setStoreId(parsed.storeId ?? (parsed.storeName ? "__new" : ""));
       setStoreName(parsed.storeName);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scan failed.");
+      setError(e instanceof DOMException && e.name === "TimeoutError" ? "That took too long. Try again with a smaller photo." : e instanceof Error ? e.message : "Scan failed.");
     } finally {
       setScanning(false);
     }

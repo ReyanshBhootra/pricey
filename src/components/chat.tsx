@@ -11,14 +11,22 @@ type Msg = { role: "user" | "assistant"; text: string };
 
 const SUGGESTIONS = ["How much are eggs near me?", "What can I cook for under $10?", "Any free food right now?", "Where's the cheapest coffee?"];
 
-// Location only if the person already allowed it; never block the chat on a prompt.
+// Location if we can get it within 3 seconds; never block the chat on it. The browser's own
+// timeout does not start while a permission prompt is open, so we add a hard cutoff.
 function currentSpot(): Promise<{ lat: number; lng: number } | null> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
+    const cutoff = setTimeout(() => resolve(null), 3000);
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve(inNyc(coords.latitude, coords.longitude) ? { lat: coords.latitude, lng: coords.longitude } : null),
-      () => resolve(null),
-      { timeout: 4000, maximumAge: 300000 },
+      ({ coords }) => {
+        clearTimeout(cutoff);
+        resolve(inNyc(coords.latitude, coords.longitude) ? { lat: coords.latitude, lng: coords.longitude } : null);
+      },
+      () => {
+        clearTimeout(cutoff);
+        resolve(null);
+      },
+      { timeout: 3000, maximumAge: 300000 },
     );
   });
 }
@@ -50,11 +58,13 @@ export function Chat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: next, ...(where ?? {}) }),
+        signal: AbortSignal.timeout(35000),
       });
-      const data = await res.json();
-      setMessages([...next, { role: "assistant", text: data.reply ?? data.error ?? "Something went wrong." }]);
-    } catch {
-      setMessages([...next, { role: "assistant", text: "I couldn't reach the server. Check your connection and try again." }]);
+      const data = await res.json().catch(() => ({}));
+      setMessages([...next, { role: "assistant", text: data.reply ?? data.error ?? "Something went wrong. Try asking again." }]);
+    } catch (e) {
+      const slow = e instanceof DOMException && e.name === "TimeoutError";
+      setMessages([...next, { role: "assistant", text: slow ? "That took too long. Try asking again." : "I couldn't reach the server. Check your connection and try again." }]);
     } finally {
       setBusy(false);
     }

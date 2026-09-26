@@ -1,8 +1,11 @@
-import { GEMINI_MODEL, gemini, geminiEnabled } from "@/lib/gemini";
+import { generate, geminiEnabled } from "@/lib/gemini";
 import { answerFromData, buildContext, SYSTEM_PROMPT } from "@/lib/grounding";
 import { inNyc } from "@/lib/format";
 
 type Msg = { role: "user" | "assistant"; text: string };
+
+// Room for the Gemini time limit below plus the data read.
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
   let body: { messages?: Msg[]; lat?: number; lng?: number };
@@ -26,13 +29,15 @@ export async function POST(req: Request) {
 
   if (geminiEnabled()) {
     try {
-      const res = await gemini().models.generateContent({
-        model: GEMINI_MODEL,
-        contents: messages.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })),
-        // No maxOutputTokens: Flash models "think" first and that counts toward the cap, so a
-        // tight cap can leave an empty answer on longer questions. The prompt keeps replies short.
-        config: { systemInstruction: `${SYSTEM_PROMPT}\n\nDATA:\n${ctx.text}`, temperature: 0.4 },
-      });
+      const res = await generate(
+        {
+          contents: messages.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })),
+          // No maxOutputTokens: thinking counts toward it and can leave an empty answer.
+          // Thinking is capped in generate(), and the prompt keeps replies short.
+          config: { systemInstruction: `${SYSTEM_PROMPT}\n\nDATA:\n${ctx.text}`, temperature: 0.4 },
+        },
+        20000,
+      );
       const reply = res.text?.replace(/\*\*/g, "").trim();
       if (reply) return Response.json({ reply, source: "gemini" });
       console.error("Gemini chat returned no text, answering from data. finishReason:", res.candidates?.[0]?.finishReason, "blockReason:", res.promptFeedback?.blockReason);

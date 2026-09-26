@@ -1,6 +1,6 @@
 // Server only. Receipt photo -> store + item lines, matched to our catalog.
 import { getItems, getStores } from "./data";
-import { GEMINI_MODEL, gemini } from "./gemini";
+import { generate } from "./gemini";
 import { CATEGORIES, type Category } from "./types";
 
 export interface ReceiptLine {
@@ -54,11 +54,13 @@ ${items.map((i) => `${i.id}: ${i.name}`).join("\n")}
 KNOWN STORES (id: name, borough):
 ${stores.map((s) => `${s.id}: ${s.name}, ${s.borough}`).join("\n")}`;
 
-  const res = await gemini().models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [{ role: "user", parts: [{ inlineData: { mimeType, data: image.toString("base64") } }, { text: prompt }] }],
-    config: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 },
-  });
+  const res = await generate(
+    {
+      contents: [{ role: "user", parts: [{ inlineData: { mimeType, data: image.toString("base64") } }, { text: prompt }] }],
+      config: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 },
+    },
+    45000,
+  );
 
   const data = JSON.parse(res.text ?? "{}") as Partial<ParsedReceipt>;
   const itemIds = new Set(items.map((i) => i.id));

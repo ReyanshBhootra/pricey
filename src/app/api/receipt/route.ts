@@ -1,6 +1,9 @@
 import { geminiEnabled } from "@/lib/gemini";
 import { parseReceipt } from "@/lib/receipt";
 
+// Room for the 45 second Gemini time limit on a receipt photo.
+export const maxDuration = 60;
+
 const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 

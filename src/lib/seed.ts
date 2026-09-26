@@ -76,15 +76,18 @@ function buildReports(): Report[] {
       if (isCafe && !cafeItem) continue;
       if (!isCafe && !isBodega && item.category === "coffee" && rand() < 0.6) continue;
       if (rand() < 0.35) continue; // not every store has every item reported
+      if (store.id === "shoprite-staten-island" && item.id === "potatoes-5lb") continue; // demo case below
 
       const price = Math.round(BASE_PRICE[item.id] * markup * (0.85 + rand() * 0.3) * 100) / 100;
       const votes = 1 + Math.floor(rand() * 4);
+      // Distinct users per store and item, since vouching counts one vote per person.
+      const start = Math.floor(rand() * 40);
       for (let v = 0; v < votes; v++) {
-        add({ itemId: item.id, storeId: store.id, price, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${Math.floor(rand() * 30)}`, type: "price" });
+        add({ itemId: item.id, storeId: store.id, price, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${start + v}`, type: "price" });
       }
       if (rand() < 0.25) {
         // One outlier so vouching has something to beat.
-        add({ itemId: item.id, storeId: store.id, price: Math.round(price * 0.7 * 100) / 100, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${Math.floor(rand() * 30)}`, type: "price" });
+        add({ itemId: item.id, storeId: store.id, price: Math.round(price * 0.7 * 100) / 100, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${start + votes}`, type: "price" });
       }
     }
   }

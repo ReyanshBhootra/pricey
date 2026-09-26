@@ -1,8 +1,11 @@
 "use client";
 
+import { Bell, BellRing } from "lucide-react";
 import { useSyncExternalStore } from "react";
+import { Button } from "@/components/ui/button";
 
-// Tracked items live in this browser only. Alerts show on the Nearby page.
+// Tracked items live in this browser only. Alerts show on the Nearby page,
+// and as a browser notification when permission is granted.
 const TRACK_KEY = "pricey_tracked";
 const EVENT = "pricey-tracked-change";
 
@@ -38,8 +41,15 @@ export function TrackButton({ itemId }: { itemId: string }) {
   const tracked = useTracked()?.includes(itemId) ?? false;
 
   const toggle = () => {
-    const list = (JSON.parse(read()) as string[]).filter((id) => id !== itemId);
-    if (!tracked) list.push(itemId);
+    let list: string[] = [];
+    try {
+      list = JSON.parse(read());
+    } catch {}
+    list = list.filter((id) => id !== itemId);
+    if (!tracked) {
+      list.push(itemId);
+      if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    }
     try {
       localStorage.setItem(TRACK_KEY, JSON.stringify(list));
     } catch {}
@@ -47,11 +57,9 @@ export function TrackButton({ itemId }: { itemId: string }) {
   };
 
   return (
-    <button
-      onClick={toggle}
-      className={`rounded-full border px-3 py-1.5 text-sm ${tracked ? "border-accent bg-accent-soft text-accent" : "border-line bg-card"}`}
-    >
+    <Button variant={tracked ? "secondary" : "outline"} size="sm" onClick={toggle} className="rounded-full">
+      {tracked ? <BellRing className="text-primary" /> : <Bell />}
       {tracked ? "Tracking price" : "Track price"}
-    </button>
+    </Button>
   );
 }

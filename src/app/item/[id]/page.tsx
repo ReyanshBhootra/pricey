@@ -1,28 +1,43 @@
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LiveRefresh } from "@/components/live-refresh";
 import { PriceList } from "@/components/price-list";
 import { TrackButton } from "@/components/track-button";
-import { getItems, getPricesForItem, getStores } from "@/lib/data";
+import { Button } from "@/components/ui/button";
+import { getItem, getPricesForItem, getStores } from "@/lib/data";
+import { money } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function ItemPage({ params }: PageProps<"/item/[id]">) {
   const { id } = await params;
-  const [items, stores, prices] = await Promise.all([getItems(), getStores(), getPricesForItem(id)]);
-  const item = items.find((i) => i.id === id);
+  const [item, stores, prices] = await Promise.all([getItem(id), getStores(), getPricesForItem(id)]);
   if (!item) notFound();
+  const low = prices[0]?.price;
+  const high = prices.at(-1)?.price;
 
   return (
     <>
-      <p className="text-xs tracking-wide text-muted uppercase">{item.category}</p>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <LiveRefresh name="reports" field="itemId" value={id} />
+      <p className="text-xs tracking-wide text-muted-foreground uppercase">{item.category}</p>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">{item.name}</h1>
         <TrackButton itemId={item.id} />
       </div>
-      <PriceList prices={prices} stores={new Map(stores.map((s) => [s.id, s]))} />
-      <Link href={`/report?item=${item.id}`} className="mt-4 inline-block text-sm text-accent hover:underline">
-        Saw a different price? Report it
-      </Link>
+      {prices.length > 1 && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          {money(low!)} to {money(high!)} across {prices.length} stores. Save {money(high! - low!)} by shopping at the cheapest.
+        </p>
+      )}
+      <div className="mt-3">
+        <PriceList prices={prices} stores={new Map(stores.map((s) => [s.id, s]))} />
+      </div>
+      <Button asChild variant="outline" className="mt-4">
+        <Link href={`/report?item=${item.id}`}>
+          <Plus /> Saw a different price? Report it
+        </Link>
+      </Button>
     </>
   );
 }

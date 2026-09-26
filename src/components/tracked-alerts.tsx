@@ -1,32 +1,55 @@
 "use client";
 
+import { TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useMemo } from "react";
 import { money, timeAgo } from "@/lib/format";
 import type { PriceChange } from "@/lib/types";
 import { useTracked } from "./track-button";
 
 type Change = PriceChange & { itemName: string; storeName: string };
+const SEEN_KEY = "pricey_seen_changes";
 
 export function TrackedAlerts({ changes }: { changes: Change[] }) {
   const tracked = useTracked();
-  if (!tracked) return null;
+  const key = tracked?.join(",");
+  const mine = useMemo(() => (key === undefined ? [] : changes.filter((c) => key.split(",").includes(c.itemId)).slice(0, 5)), [changes, key]);
 
-  const mine = changes.filter((c) => tracked.includes(c.itemId)).slice(0, 5);
+  // Fire one browser notification per change we have not shown before.
+  useEffect(() => {
+    if (!mine.length || !("Notification" in window) || Notification.permission !== "granted") return;
+    try {
+      const seen = new Set<string>(JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]"));
+      for (const c of mine) {
+        if (seen.has(c.id)) continue;
+        new Notification(`${c.itemName} is now ${money(c.newPrice)}`, { body: `At ${c.storeName}, was ${money(c.oldPrice)}` });
+        seen.add(c.id);
+      }
+      localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-200)));
+    } catch {}
+  }, [mine]);
+
   if (mine.length === 0) return null;
 
   return (
-    <section className="mb-5 rounded-xl border border-line bg-warn-soft p-4">
+    <section className="mb-5 rounded-xl border bg-warn-soft p-4">
       <h2 className="mb-2 text-sm font-semibold">Price changes on items you track</h2>
-      <ul className="space-y-1 text-sm">
-        {mine.map((c) => (
-          <li key={c.id}>
-            <Link href={`/item/${c.itemId}`} className="underline-offset-2 hover:underline">
-              {c.itemName}
-            </Link>{" "}
-            at {c.storeName}: {money(c.oldPrice)} → <strong>{money(c.newPrice)}</strong>{" "}
-            <span className="text-muted">{timeAgo(c.timestamp)}</span>
-          </li>
-        ))}
+      <ul className="space-y-1.5 text-sm">
+        {mine.map((c) => {
+          const Icon = c.newPrice < c.oldPrice ? TrendingDown : TrendingUp;
+          return (
+            <li key={c.id} className="flex items-start gap-2">
+              <Icon className="mt-0.5 size-4 shrink-0" />
+              <span>
+                <Link href={`/item/${c.itemId}`} className="font-medium hover:underline">
+                  {c.itemName}
+                </Link>{" "}
+                at {c.storeName}: {money(c.oldPrice)} → <strong>{money(c.newPrice)}</strong>{" "}
+                <span className="text-muted-foreground">{timeAgo(c.timestamp)}</span>
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

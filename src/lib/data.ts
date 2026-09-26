@@ -5,7 +5,10 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
+  setDoc,
   query,
   where,
   type Firestore,
@@ -61,6 +64,20 @@ export function getStores(): Promise<Store[]> {
 
 export function getItems(): Promise<Item[]> {
   return all<Item>(getDb(), "items");
+}
+
+export async function getStore(id: string): Promise<Store | null> {
+  const db = getDb();
+  if (!db) return mem.stores.find((s) => s.id === id) ?? null;
+  const snap = await getDoc(doc(db, COLLECTIONS.stores, id));
+  return snap.exists() ? ({ ...snap.data(), id: snap.id } as Store) : null;
+}
+
+export async function getItem(id: string): Promise<Item | null> {
+  const db = getDb();
+  if (!db) return mem.items.find((i) => i.id === id) ?? null;
+  const snap = await getDoc(doc(db, COLLECTIONS.items, id));
+  return snap.exists() ? ({ ...snap.data(), id: snap.id } as Item) : null;
 }
 
 export interface NearbyStore extends Store {
@@ -207,6 +224,37 @@ export async function submitReport(input: NewReport): Promise<SubmitResult> {
   }
 
   return { report, priceChanged, oldPrice, newPrice };
+}
+
+const slug = (s: string) =>
+  s.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+
+// Adds an item, or returns the existing one with the same name.
+export async function addItem(input: Omit<Item, "id">): Promise<Item> {
+  const name = input.name.trim();
+  const id = slug(name);
+  if (!id) throw new Error("Item name is empty");
+  const existing = await getItem(id);
+  if (existing) return existing;
+  const item: Item = { id, name, category: input.category };
+  const db = getDb();
+  if (!db) mem.items.push(item);
+  else await setDoc(doc(db, COLLECTIONS.items, id), { name, category: input.category });
+  return item;
+}
+
+// Adds a store, or returns the existing one with the same name in the same borough.
+export async function addStore(input: Omit<Store, "id">): Promise<Store> {
+  const name = input.name.trim();
+  const id = slug(`${name} ${input.borough}`);
+  if (!slug(name)) throw new Error("Store name is empty");
+  const existing = await getStore(id);
+  if (existing) return existing;
+  const store: Store = { ...input, id, name };
+  const db = getDb();
+  if (!db) mem.stores.push(store);
+  else await setDoc(doc(db, COLLECTIONS.stores, id), { name, borough: input.borough, lat: input.lat, lng: input.lng });
+  return store;
 }
 
 export async function createForumPost(input: NewForumPost): Promise<ForumPost> {

@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Anyone can read. Anyone can add well-formed data. Nobody can edit or delete,
+// so reports are an append-only log and vouching stays honest.
+// The app writes through the Firebase web SDK without login, so these checks
+// are the guard rail. Tighten with Firebase Auth after the hackathon.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function str(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+    function num(v, lo, hi) { return (v is int || v is float) && v >= lo && v <= hi; }
+    function boroughOk(b) { return b in ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island']; }
+    function recent(t) { return t is int && t > request.time.toMillis() - 600000 && t < request.time.toMillis() + 600000; }
+
+    match /stores/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'borough', 'lat', 'lng'])
+        && str(request.resource.data.name, 100)
+        && boroughOk(request.resource.data.borough)
+        && num(request.resource.data.lat, 40.4, 41.0)
+        && num(request.resource.data.lng, -74.3, -73.6);
+    }
+
+    match /items/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'category'])
+        && str(request.resource.data.name, 80)
+        && request.resource.data.category in ['produce', 'dairy', 'meat', 'bakery', 'pantry', 'coffee', 'prepared food'];
+    }
+
+    match /reports/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['itemId', 'storeId', 'price', 'timestamp', 'userId', 'type', 'note'])
+        && str(request.resource.data.itemId, 80)
+        && str(request.resource.data.storeId, 120)
+        && str(request.resource.data.userId, 100)
+        && num(request.resource.data.price, 0, 1000)
+        && request.resource.data.type in ['price', 'event']
+        && recent(request.resource.data.timestamp)
+        && (!('note' in request.resource.data) || str(request.resource.data.note, 200));
+    }
+
+    match /priceChanges/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['itemId', 'storeId', 'oldPrice', 'newPrice', 'timestamp'])
+        && num(request.resource.data.oldPrice, 0, 1000)
+        && num(request.resource.data.newPrice, 0, 1000)
+        && recent(request.resource.data.timestamp);
+    }
+
+    match /forumPosts/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['borough', 'text', 'timestamp', 'userId'])
+        && boroughOk(request.resource.data.borough)
+        && str(request.resource.data.text, 500)
+        && str(request.resource.data.userId, 100)
+        && recent(request.resource.data.timestamp);
+    }
+  }
+}

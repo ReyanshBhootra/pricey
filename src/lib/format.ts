@@ -21,3 +21,9 @@ export const BOROUGH_CENTERS: Record<Borough, { lat: number; lng: number }> = {
 };
 
 export const DEFAULT_LOCATION = BOROUGH_CENTERS.Manhattan;
+
+export const inNyc = (lat: number, lng: number) => lat > 40.49 && lat < 40.92 && lng > -74.27 && lng < -73.68;
+
+export const km = (d: number) => (d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`);
+
+export const hoursAgo = (h: number) => Date.now() - h * 60 * 60 * 1000;

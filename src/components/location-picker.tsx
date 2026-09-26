@@ -1,11 +1,11 @@
 "use client";
 
+import { LocateFixed } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BOROUGH_CENTERS } from "@/lib/format";
+import { BOROUGH_CENTERS, inNyc } from "@/lib/format";
 import { BOROUGHS } from "@/lib/types";
-
-const inNyc = (lat: number, lng: number) => lat > 40.49 && lat < 40.92 && lng > -74.27 && lng < -73.68;
+import { chipClass } from "./chip";
 
 export function LocationPicker({ label }: { label: string }) {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function LocationPicker({ label }: { label: string }) {
     next.set("lat", lat.toFixed(4));
     next.set("lng", lng.toFixed(4));
     next.set("loc", loc);
-    router.replace(`/?${next}`);
+    router.replace(`/?${next}`, { scroll: false });
   };
 
   // Callbacks only, so it is safe to start from an effect.
@@ -54,22 +54,18 @@ export function LocationPicker({ label }: { label: string }) {
 
   return (
     <div className="mb-4">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted">Near</span>
-        <button onClick={locate} className={chip(label === "You")}>
-          Me
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <button onClick={locate} className={chipClass(label === "You")}>
+          <LocateFixed className="mr-1.5 size-3.5" />
+          Near me
         </button>
         {BOROUGHS.map((b) => (
-          <button key={b} onClick={() => go(BOROUGH_CENTERS[b].lat, BOROUGH_CENTERS[b].lng, b)} className={chip(label === b)}>
+          <button key={b} onClick={() => go(BOROUGH_CENTERS[b].lat, BOROUGH_CENTERS[b].lng, b)} className={chipClass(label === b)}>
             {b}
           </button>
         ))}
       </div>
-      {status && <p className="mt-2 text-xs text-muted">{status}</p>}
+      {status && <p className="mt-2 text-xs text-muted-foreground">{status}</p>}
     </div>
   );
-}
-
-function chip(active: boolean) {
-  return `rounded-full border px-3 py-1 ${active ? "border-foreground bg-foreground text-background" : "border-line bg-card"}`;
 }

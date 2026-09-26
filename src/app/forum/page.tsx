@@ -1,4 +1,9 @@
 import Link from "next/link";
+import { chipClass } from "@/components/chip";
+import { LiveRefresh } from "@/components/live-refresh";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { createPostAction } from "@/lib/actions";
 import { getForumPosts } from "@/lib/data";
 import { timeAgo } from "@/lib/format";
@@ -13,42 +18,35 @@ export default async function ForumPage({ searchParams }: PageProps<"/forum">) {
 
   return (
     <>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Forum</h1>
-      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 text-sm">
+      <LiveRefresh name="forumPosts" field="borough" value={borough} />
+      <h1 className="mb-1 text-2xl font-bold tracking-tight">Forum</h1>
+      <p className="mb-4 text-sm text-muted-foreground">Deals, tips, and questions from your borough.</p>
+      <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {BOROUGHS.map((b) => (
-          <Link
-            key={b}
-            href={`/forum?borough=${encodeURIComponent(b)}`}
-            className={`shrink-0 rounded-full border px-3 py-1 ${b === borough ? "border-foreground bg-foreground text-background" : "border-line bg-card"}`}
-          >
+          <Link key={b} href={`/forum?borough=${encodeURIComponent(b)}`} className={chipClass(b === borough)} scroll={false}>
             {b}
           </Link>
         ))}
       </div>
 
-      <form action={createPostAction} className="mb-5 rounded-xl border border-line bg-card p-3">
+      <form action={createPostAction} className="mb-5 rounded-xl border bg-card p-3 shadow-xs">
         <input type="hidden" name="borough" value={borough} />
-        <textarea
-          name="text"
-          required
-          maxLength={500}
-          rows={3}
-          placeholder={`Share a deal or ask something in ${borough}`}
-          className="w-full resize-none rounded-lg border border-line bg-background p-2.5 text-sm"
-        />
+        <Textarea name="text" required maxLength={500} rows={3} placeholder={`Share a deal or ask something in ${borough}`} className="resize-none" />
         <div className="mt-2 flex justify-end">
-          <button className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white dark:text-black">Post</button>
+          <Button>Post</Button>
         </div>
       </form>
 
       {posts.length === 0 ? (
-        <p className="text-center text-sm text-muted">No posts in {borough} yet.</p>
+        <p className="text-center text-sm text-muted-foreground">No posts in {borough} yet. Start the conversation.</p>
       ) : (
         <ul className="space-y-3">
           {posts.map((p) => (
-            <li key={p.id} className="rounded-xl border border-line bg-card p-4">
-              <p className="text-sm whitespace-pre-wrap">{p.text}</p>
-              <p className="mt-2 text-xs text-muted">{timeAgo(p.timestamp)}</p>
+            <li key={p.id}>
+              <Card className="gap-2 px-4 py-3">
+                <p className="text-sm whitespace-pre-wrap">{p.text}</p>
+                <p className="text-xs text-muted-foreground">{timeAgo(p.timestamp)}</p>
+              </Card>
             </li>
           ))}
         </ul>

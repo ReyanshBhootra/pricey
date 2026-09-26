@@ -1,12 +1,25 @@
 import type { Report, TrustedPrice } from "./types";
 
+const FRESH_MS = 30 * 24 * 60 * 60 * 1000;
+
 // Vouching: the price the most people agree on wins.
 // 10 people say $10 and 2 say $7 -> $10.
+// One person, one vote: only each user's latest report for this item and store counts,
+// so nobody can spam a price. Only the last 30 days count, so old prices age out.
 // Two-way tie: the more recently reported price wins.
 // Three or more tied: the median of the tied prices wins.
 export function trustedPrice(reports: Report[]): TrustedPrice | null {
-  const priced = reports.filter((r) => r.type === "price");
-  if (priced.length === 0) return null;
+  const latestByUser = new Map<string, Report>();
+  for (const r of reports) {
+    if (r.type !== "price") continue;
+    const prev = latestByUser.get(r.userId);
+    if (!prev || r.timestamp > prev.timestamp) latestByUser.set(r.userId, r);
+  }
+  const votes = [...latestByUser.values()];
+  if (votes.length === 0) return null;
+  const newest = Math.max(...votes.map((r) => r.timestamp));
+  const fresh = votes.filter((r) => r.timestamp >= newest - FRESH_MS);
+  const priced = fresh.length ? fresh : votes;
 
   const buckets = new Map<number, Report[]>();
   for (const r of priced) {

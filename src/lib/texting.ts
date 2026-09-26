@@ -209,13 +209,15 @@ export async function handleTextRules(from: string, raw: string): Promise<TextRe
 
   // Free food or a deal at a place: "free bagels at myrtle deli", "deal: $1 coffee at joe coffee".
   if (/^(deal|popup|pop-up|pop up|free food)\b|^free\b/.test(t) || (/\bfree\b/.test(t) && /\bat\b|@/.test(t))) {
-    return none(await reportDeal(from, text));
+    const reply = await reportDeal(from, text);
+    return { reply, action: null, react: reply.startsWith("Posted") ? "👍" : null };
   }
 
   // A price report: has a price and a place.
   const price = findPrice(text);
   if (price !== null && (/\bat\b|@/.test(t) || /^\D+\s\$?\d/.test(t)) && !/\?$/.test(t) && !/^(how|what|where|is|are|can|any)\b/.test(t)) {
-    return none(await reportPrice(from, text, price));
+    const reply = await reportPrice(from, text, price);
+    return { reply, action: null, react: reply.startsWith("Thanks") ? "👍" : null };
   }
 
   return none(await answerQuestion(text));
@@ -283,6 +285,10 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
     } catch (e) {
       console.error("Agent failed, using rules:", e instanceof Error ? e.message : e);
     }
+  }
+  if (!out && patch.home && !incoming.attachments?.every((a) => /^image\//.test(a.mimeType)) && (text === "(sent an attachment)" || !text.trim())) {
+    // Location pin shared with no words: just confirm it.
+    out = { reply: `Got it, I'll measure distances from near ${patch.home.label} (${patch.home.borough}). Ask me how much anything is!`, react: "👍", action: null };
   }
   if (!out) {
     const zip = text.match(/^\s*(?:home\s*|i'?m in\s*)?(1\d{4})\s*$/i)?.[1];

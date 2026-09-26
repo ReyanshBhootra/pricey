@@ -8,7 +8,7 @@ Your phone  <--reply--  Photon                             <--  this relay      
 ```
 
 - **Photon** gives Pricey a real iMessage number. It can't think; it just passes texts along.
-- **This relay** (`bot/`) is a tiny program that runs on your laptop. It hands each text to the Pricey website and sends the answer back. It also sends the "N spots near you have discounts" alerts.
+- **This relay** (`bot/`) is a tiny program that runs on your laptop. It hands each text, photo, and location pin to the Pricey website and sends the answer back, with a 👍 tapback after a save and Pricey's contact card on someone's first text. Every minute it also asks the website for texts to send first (bundled deal alerts, price changes on tracked items, "still $3.99?" check-ins) and delivers them.
 - **The Pricey website** does the actual work: saves reports, vouching, Gemini answers. Same brain as the app.
 
 The relay has to keep running for texts to get answers. Close it and Pricey stops replying (the website keeps working).
@@ -54,7 +54,26 @@ You should see `Pricey relay running (iMessage)`. Leave that window open. Text y
 
 Your Photon number is shown in the dashboard, or run `npx @photon-ai/cli spectrum lines list`.
 
+## Updating the relay
+
+Downloaded the project as a ZIP? Download the new ZIP, copy your old `bot/.env` into the new `bot` folder, then `cd bot`, `npm install`, `npm start`. No need to run setup again.
+
 ## Things to text
+
+Just talk to it. For example:
+
+- `hi` (first time: a welcome and Pricey's contact card)
+- `11215` or `I'm in park slope` (your home, for real distances)
+- `paid like 4 bucks for eggs at the key food on 5th ave`
+- a photo of a grocery receipt, then `yes` to save it
+- a shared location pin (+ > Location)
+- `any free food near me?`
+- `what's new in the brooklyn forum?` / `post in brooklyn: ...`
+- `track eggs for me`
+- `alerts on`
+- `¿cuánto cuestan los huevos?` (any language)
+
+Old-style commands still work too:
 
 - `help`
 - `how much are eggs in brooklyn?`
@@ -67,6 +86,7 @@ Your Photon number is shown in the dashboard, or run `npx @photon-ai/cli spectru
 
 - **"Could not connect to Photon"**: keys are wrong (run `npm run setup` again) or your phone isn't added in the dashboard.
 - **Reply says "Pricey is having a moment"**: the website refused the relay. `TEXT_BOT_SECRET` in Vercel must match `bot/.env`, and you must redeploy after adding it.
+- **No tapbacks, contact card, photos, or alerts**: you're running the old relay. See Updating the relay above.
 - **No reply at all**: is `npm start` still running? Is the phone you're texting from added as a user in Photon?
 - **No phone handy / Photon down on demo day**: open `pricey-nine.vercel.app/text`. Same brain, in the browser.
 

@@ -150,6 +150,14 @@ export async function getPriceChanges(opts: { hours?: number; itemIds?: string[]
     .sort((a, b) => b.timestamp - a.timestamp);
 }
 
+// Everything one person reported (for stale-price check-ins).
+export async function getReportsForUser(userId: string): Promise<Report[]> {
+  const db = getDb();
+  if (!db) return mem.reports.filter((r) => r.userId === userId);
+  const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("userId", "==", userId)));
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
+}
+
 // Raw reports for a store (price and event), newest first.
 export async function getReportsForStore(storeId: string): Promise<Report[]> {
   const reports = await reportsWhere("storeId", storeId);

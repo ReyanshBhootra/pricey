@@ -5,7 +5,7 @@ import { CategoryIcon } from "@/components/category";
 import { LiveRefresh } from "@/components/live-refresh";
 import { Price } from "@/components/price";
 import { Button } from "@/components/ui/button";
-import { getItems, getReportsForStore, getStore } from "@/lib/data";
+import { getItems, getReportsForStore, getStore, liveDeals } from "@/lib/data";
 import { hoursAgo, money, timeAgo } from "@/lib/format";
 import { domainOf } from "@/lib/real-prices";
 import { CATEGORIES } from "@/lib/types";
@@ -21,7 +21,7 @@ export default async function StorePage({ params }: PageProps<"/store/[id]">) {
   const item = new Map(items.map((i) => [i.id, i]));
   const prices = trustedPricesByItem(reports);
   const dayAgo = hoursAgo(24);
-  const events = reports.filter((r) => r.type === "event" && r.timestamp >= dayAgo);
+  const events = liveDeals(reports.filter((r) => r.type === "event" && r.timestamp >= dayAgo));
   // Estimates aren't anyone's report, so they stay out of "Latest reports".
   const recent = reports.filter((r) => r.type === "price" && !r.userId.startsWith("estimate:")).slice(0, 8);
   // Prices read from the store's own website (npm run import:prices).

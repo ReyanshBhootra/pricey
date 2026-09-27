@@ -2,7 +2,7 @@
 // Used by /api/text (the Photon iMessage relay in bot/) and by the /text simulator page.
 // Same data, vouching, and Gemini grounding as the app.
 
-import { addItem, getActiveEvents, getItems, getStores, submitReport } from "./data";
+import { addItem, dealIsOver, ENDED, getActiveEvents, getItems, getStores, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { BOROUGH_PLACES, findPlace } from "./places";
 import { generate, geminiEnabled, CHAT_MODELS } from "./gemini";
@@ -146,11 +146,23 @@ async function reportDeal(from: string, text: string): Promise<string> {
   // The store is shown next to the deal already, so the note is just what and when.
   const what = [parts.what, parts.when].filter(Boolean).join(" ");
   const note = await postDeal({ userId: textUserId(from), storeId: store.id, what, price: free ? 0 : (findPrice(body) ?? 0), items, itemHint: parts.what });
+  if (note.startsWith(ENDED)) return `Thanks for the heads up! I took the deals at ${store.name} off the list.`;
   return `Posted! People near ${store.name} will see: "${note}". Thanks for sharing.`;
 }
 
+// Marks the deals at a store as over (see liveDeals in data.ts).
+export async function endDeal(d: { userId: string; storeId: string; what: string; items?: Item[] }): Promise<string> {
+  const items = d.items ?? (await getItems());
+  const item = matchItems(d.what, items)[0] ?? (await addItem({ name: "Other food or deal", category: "prepared food" }));
+  const note = d.what.replace(/\s+/g, " ").trim().slice(0, 190);
+  await submitReport({ itemId: item.id, storeId: d.storeId, price: 0, userId: d.userId, type: "event", note: `${ENDED}${note}` });
+  return `${ENDED}${note}`;
+}
+
 // Free food / pop-up / discount: same reports pipeline, type "event". Used by texts and the app.
+// If the text says a deal ended, it closes the store's deals instead (the note starts with ENDED).
 export async function postDeal(d: { userId: string; storeId: string; what: string; price: number; items?: Item[]; itemHint?: string }): Promise<string> {
+  if (dealIsOver(d.what)) return endDeal(d);
   const items = d.items ?? (await getItems());
   const item = matchItems(d.itemHint ?? d.what, items)[0] ?? (await addItem({ name: "Other food or deal", category: "prepared food" }));
   const note = d.what.replace(/\s+/g, " ").trim().slice(0, 200);

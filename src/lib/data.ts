@@ -247,6 +247,23 @@ export async function getStorePrices(storeId: string, category?: Category): Prom
   return trustedPricesByItem(reports).filter((t) => !allowed || allowed.has(t.itemId));
 }
 
+// "The halal cart deal is over": saved as an event whose note starts with ENDED (same fields as
+// any report, so no database change). It closes every deal at that store posted before it.
+export const ENDED = "ENDED: ";
+// "the deal is over", "sold out", "they ran out", "no more free pizza": someone saying a deal
+// ended, not a new deal. ("free pizza until it's gone" is still a deal.)
+export const dealIsOver = (text: string) =>
+  !/\buntil\b|\btill\b|\bwhile\b/i.test(text) &&
+  /\b(is|are|was|were|it's|its|all)\s+(over|done|gone|finished|ended|closed|sold out)\b|\b(sold|ran|run|running) out\b|\bno (more|longer)\b|\b(deal|sale|promo|popup|pop-up)\s+(ended|expired|cancell?ed)\b|\bnot (there|happening) any\s?more\b/i.test(text);
+
+// Also catches "it's over" messages saved as ordinary deals before this existed.
+export const isEndedNote = (r: Report) => r.type === "event" && ((r.note ?? "").startsWith(ENDED) || dealIsOver(r.note ?? ""));
+export function liveDeals(events: Report[]): Report[] {
+  const endedAt = new Map<string, number>();
+  for (const e of events) if (isEndedNote(e)) endedAt.set(e.storeId, Math.max(endedAt.get(e.storeId) ?? 0, e.timestamp));
+  return events.filter((e) => e.type === "event" && !isEndedNote(e) && e.timestamp > (endedAt.get(e.storeId) ?? 0));
+}
+
 // Free food and pop-up reports from the last `hours`, newest first.
 // Pass lat/lng to limit to stores within radiusKm.
 export async function getActiveEvents(opts: { hours?: number; lat?: number; lng?: number; radiusKm?: number } = {}): Promise<Report[]> {
@@ -260,7 +277,7 @@ export async function getActiveEvents(opts: { hours?: number; lat?: number; lng?
     const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("type", "==", "event")));
     events = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
   }
-  events = mergeReports(events, () => false).filter((e) => e.timestamp >= since);
+  events = liveDeals(mergeReports(events, () => false).filter((e) => e.timestamp >= since));
   if (lat !== undefined && lng !== undefined) {
     const nearby = new Set((await getNearbyStores(lat, lng, radiusKm)).map((s) => s.id));
     events = events.filter((e) => nearby.has(e.storeId));

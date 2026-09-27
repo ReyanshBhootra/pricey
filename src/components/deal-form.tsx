@@ -62,7 +62,11 @@ export function DealForm({ stores, storeId }: { stores: Store[]; storeId: string
       {state?.ok && (
         <p role="status" className="flex items-center gap-3 rounded-2xl bg-warn-soft p-3 text-sm animate-in fade-in zoom-in-95">
           <BadgePercent className="size-6 shrink-0" />
-          <span>Posted! It shows up in the deals banner for people nearby, and in texted alerts.</span>
+          <span>
+            {state.note.startsWith("ENDED: ")
+              ? "Thanks! That spot's deals are off the list now."
+              : "Posted! It shows up in the deals banner for people nearby, and in texted alerts."}
+          </span>
         </p>
       )}
     </form>

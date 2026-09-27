@@ -47,7 +47,7 @@ export default async function ProfilePage() {
           [
             [prices.length, prices.length === 1 ? "price reported" : "prices reported", "bg-lime text-lime-foreground"],
             [stores.size, stores.size === 1 ? "store" : "stores", "bg-[#8fd3ff] text-[#2a1338]"],
-            [reports.filter((r) => r.type === "event").length, "deals shared", "bg-tangerine text-tangerine-foreground"],
+            [reports.filter((r) => r.type === "event" && !(r.note ?? "").startsWith("ENDED: ")).length, "deals shared", "bg-tangerine text-tangerine-foreground"],
           ] as const
         ).map(([n, label, tone]) => (
           <div key={label} className={`rounded-[1.5rem] p-3 text-center ${tone}`}>

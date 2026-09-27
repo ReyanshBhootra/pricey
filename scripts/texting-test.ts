@@ -51,6 +51,17 @@ async function main() {
   assert.match(await say("unicorn steak 9.99 at key food park slope"), /couldn't tell which item/);
   assert.equal(await say("free bagels at myrtle deli until 5pm"), 'Posted! People near Myrtle Deli & Grocery will see: "free bagels until 5pm". Thanks for sharing.');
   assert.match(await say("deals in brooklyn"), /spots? in Brooklyn (has|have) discounts right now:[\s\S]*free bagels/i);
+
+  // "It's over" closes the deal instead of posting a new free one.
+  const { dealIsOver, getActiveEvents } = await import("../src/lib/data");
+  for (const t of ["halal cart plates deal is over, was a one day thing", "they ran out of bagels", "no more free coffee", "pizza's all gone", "sold out already"]) assert.ok(dealIsOver(t), t);
+  for (const t of ["free pizza until it's gone", "free bagels until 5pm", "Halal cart outside doing $5 plates", "bogo while supplies last, almost sold out"]) assert.ok(!dealIsOver(t), t);
+  assert.match(await say("deal: bagels are gone at myrtle deli"), /took the deals at Myrtle Deli & Grocery off the list/);
+  const live = await getActiveEvents({ hours: 24 });
+  assert.ok(!live.some((e) => e.storeId === "bodega-bushwick"), "bagels deal and the 'over' note are both hidden");
+  assert.ok(live.length > 0, "deals at other stores stay");
+  assert.equal(await say("free bagels at myrtle deli until 5pm"), 'Posted! People near Myrtle Deli & Grocery will see: "free bagels until 5pm". Thanks for sharing.');
+  assert.ok((await getActiveEvents({ hours: 24 })).some((e) => e.storeId === "bodega-bushwick"), "a new deal after it ended shows again");
   const eggs = await say("how much are eggs in brooklyn?");
   assert.match(eggs, /^Eggs \(dozen\) in Brooklyn: \$\d/, eggs);
   assert.doesNotMatch(eggs, /near you|mi |km|walk/, eggs); // borough only: no made-up distances

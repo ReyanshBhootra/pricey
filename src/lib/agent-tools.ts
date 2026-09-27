@@ -2,13 +2,13 @@
 // these functions do the real work against our data and return plain facts. Gemini never
 // sees a price that didn't come from here, and can't claim a save that didn't happen.
 
-import { addItem, addStore, learnReceiptWords, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
+import { addItem, addStore, ENDED, learnReceiptWords, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { byValue, cityIndex, distanceText, forgetCityCache, matchItems, toFact, type Located } from "./grounding";
 import { describeChange, priceHistory } from "./history";
 import { optimizeList, planForAgent } from "./optimizer";
 import { BOROUGH_PLACES, findPlace, placeFromZip } from "./places";
-import { findBorough, matchStore, postDeal } from "./texting";
+import { endDeal, findBorough, matchStore, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type Item, type Store, type UserProfile } from "./types";
 import { distanceKm } from "./vouch";
 
@@ -194,7 +194,22 @@ export const TOOLS = {
       const price = num(a.price);
       const note = await postDeal({ userId: ctx.user.id, storeId: store.id, what: str(a.what), price: Number.isFinite(price) ? price : 0 });
       ctx.wrote = true;
+      if (note.startsWith(ENDED)) return { deal_ended: true, store: store.name, hint: "It said the deal is over, so the store's deals were taken off the list." };
       return { posted: true, store: store.name, note };
+    },
+  },
+
+  end_deal: {
+    description: "Someone says a deal, pop-up, or free food is over, sold out, or gone. Takes that store's deals off the list. Never use post_deal for this.",
+    parameters: { type: "object", properties: { store: { type: "string" }, what: { type: "string", description: "What they said, e.g. 'halal cart deal is over'" } }, required: ["store"] },
+    async run(a: Args, ctx: ToolContext) {
+      const { stores } = await cityIndex();
+      const { store, suggestions } = resolveStore(str(a.store), stores, ctx);
+      if (!store) return { error: suggestions.length ? "which_store" : "unknown_store", did_you_mean: suggestions.map((s) => s.name) };
+      await endDeal({ userId: ctx.user.id, storeId: store.id, what: str(a.what) || "deal is over" });
+      forgetCityCache();
+      ctx.wrote = true;
+      return { deal_ended: true, store: store.name };
     },
   },
 

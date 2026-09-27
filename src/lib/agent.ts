@@ -66,6 +66,16 @@ PRIVACY AND SAFETY: never share anyone's phone number or personal details. Don't
 
 const FIRST = `THIS IS THEIR FIRST MESSAGE EVER TO PRICEY. Open with a warm hello (one or two sentences) saying who you are: you keep track of what food really costs around NYC, thanks to people like them. If their message is a real request, handle it too. Then, if you don't know where they are, ask for their ZIP or neighborhood so you can find stuff close by. Whole reply under 70 words. Don't list commands.`;
 
+// Totals are computed here, never by the model: "these add up to $45.69; receipt total $47.75".
+function receiptTotals(p: { lines: { price: number }[]; subtotal?: number | null; total?: number | null }): string {
+  const sum = Math.round(p.lines.reduce((a, l) => a + l.price, 0) * 100) / 100;
+  const parts = [`These ${p.lines.length} prices add up to ${money(sum)}.`];
+  if (p.subtotal) parts.push(`Receipt prints subtotal ${money(p.subtotal)}.`);
+  if (p.total) parts.push(`Receipt total (with tax) ${money(p.total)}; quote this one as the total.`);
+  if (p.subtotal && Math.abs(p.subtotal - sum) > 0.02) parts.push("The lines don't match the subtotal, so a line may be misread or missing: ask them to check.");
+  return parts.join(" ");
+}
+
 function aboutThem(u: UserProfile, channel: Channel, name: (kind: "item" | "store", id: string) => string): string {
   const lines = [
     `Channel: ${channel === "imessage" ? "iMessage" : "web text simulator"}.`,
@@ -77,8 +87,9 @@ function aboutThem(u: UserProfile, channel: Channel, name: (kind: "item" | "stor
   const p = u.pending;
   if (p?.kind === "receipt") {
     lines.push(
-      `PENDING RECEIPT waiting for their OK (from ${p.storeName || "an unknown store"}${p.storeId ? "" : ", store not matched yet"}):`,
-      ...p.lines.map((l) => `- ${l.name}: ${money(l.price)}${l.itemId ? "" : " (new item)"}`),
+      `PENDING RECEIPT waiting for their OK (from ${p.storeName || "an unknown store"}${p.storeAddress ? `, ${p.storeAddress}` : ""}${p.storeId ? "" : ": NOT a Pricey store yet, it gets added when they confirm"}):`,
+      ...p.lines.map((l) => `- ${l.name}: ${money(l.price)}${l.itemId ? "" : " (new to Pricey)"}`),
+      receiptTotals(p),
       "If they say yes or ok, call receipt_save (with any removals/fixes they mention). If they say no, call receipt_discard.",
     );
   }

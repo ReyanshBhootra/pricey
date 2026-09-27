@@ -269,8 +269,8 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
       try {
         const r = await parseReceipt(a.data, a.mimeType);
         if (r.lines.length) {
-          patch.pending = { kind: "receipt", storeId: r.storeId, storeName: r.storeName, lines: r.lines.map(({ name, price, itemId, category, raw }) => ({ name, price, itemId, category, raw })), at: now };
-          note += `[They just sent a receipt photo. It's parsed and PENDING (see ABOUT THEM). Summarize it briefly: store, number of items, 3 or 4 example prices, total. ${r.storeId ? "" : "Ask which store it's from. "}Ask them to reply yes to save, or tell you what to fix.]\n`;
+          patch.pending = { kind: "receipt", storeId: r.storeId, storeName: r.storeName, storeAddress: r.storeAddress, subtotal: r.subtotal, total: r.total, lines: r.lines.map(({ name, price, itemId, category, raw }) => ({ name, price, itemId, category, raw })), at: now };
+          note += `[They just sent a receipt photo. It's parsed and PENDING (see ABOUT THEM). Summarize it briefly: store, number of items, 3 or 4 example prices, and the total exactly as PENDING RECEIPT gives it (never add prices up yourself). ${r.storeId ? "" : "The store is new to Pricey: say so, and that it'll be added when they say yes. "}Ask them to reply yes to save, or tell you what to fix.]\n`;
         } else note += "[They sent a photo but it didn't look like a food receipt. Tell them kindly.]\n";
       } catch (e) {
         console.error("Receipt photo failed:", e instanceof Error ? e.message : e);
@@ -319,7 +319,9 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
 
   patch.recent = addTurn(user.recent, { role: "user", text: text.slice(0, 300), at: now }, { role: "pricey", text: out.reply.slice(0, 400), at: Date.now() });
   await saveUser(id, patch);
-  return { ...out, contactCard: first };
+  // Photon shared lines share a card named "Spectrum", not Pricey, so it stays off unless a
+  // dedicated line with our own name is set up (CONTACT_CARD=on in Vercel).
+  return { ...out, contactCard: first && process.env.CONTACT_CARD === "on" };
 }
 
 // Older relays keep their own alert list; tell them when alerts change.

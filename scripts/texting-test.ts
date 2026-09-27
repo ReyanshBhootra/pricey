@@ -1,5 +1,6 @@
 // Checks that messy real-world texts are understood.   npm run test:texting
 import assert from "node:assert/strict";
+process.env.CONTACT_CARD = "on"; // the card is off in production; test the once-only logic
 import { SEED_STORES } from "../src/lib/seed";
 import { findBorough, findPrice, handleText, handleTextRules, matchStore } from "../src/lib/texting";
 import { findPlace } from "../src/lib/places";

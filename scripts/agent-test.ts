@@ -2,6 +2,7 @@
 // tools Gemini would, then echoes the tool results so we can check what really happened.
 //   npm run test:agent
 import assert from "node:assert/strict";
+process.env.CONTACT_CARD = "on"; // the card is off in production; test the once-only logic
 import type { Content } from "@google/genai";
 import type { ModelCall } from "../src/lib/agent";
 import { getForumPosts, getUser } from "../src/lib/data";
@@ -120,6 +121,37 @@ async function main() {
   me = await getUser(phoneUserId(phone));
   assert.equal(me?.pending, null);
   console.log("PASS receipt confirm with removal");
+
+  // Receipt from a store Pricey doesn't know: exact totals in the prompt, store added on yes.
+  await saveUser(phoneUserId(phone), {
+    pending: {
+      kind: "receipt",
+      storeId: null,
+      storeName: "Green Leaf Market",
+      storeAddress: "123 Amsterdam Ave, New York, NY 10027",
+      subtotal: 45.69,
+      total: 47.75,
+      at: Date.now(),
+      lines: [
+        { name: "Bananas (lb)", price: 0.69, itemId: "bananas-lb", category: "produce", raw: "Bananas (1 lb)" },
+        { name: "Whole milk (gallon)", price: 4.29, itemId: "milk-gallon", category: "dairy", raw: "Whole Milk (1 gal)" },
+        { name: "Chicken breast (2 lb)", price: 8.98, itemId: null, category: "meat", raw: "Chicken Breast (2 lb)" },
+      ],
+    },
+  });
+  r = await send("looks right", []);
+  const system = seen.at(-1)!.system;
+  assert.match(system, /add up to \$13\.96/, "sum computed by code");
+  assert.match(system, /total \(with tax\) \$47\.75/);
+  assert.match(system, /don't match the subtotal/, "mismatch flagged");
+  assert.match(system, /NOT a Pricey store yet/);
+  r = await send("yes save it", [{ name: "receipt_save", args: {} }]);
+  assert.match(r.reply, /"saved_prices":3/);
+  assert.match(r.reply, /"new_store_added":true/);
+  const { getStores } = await import("../src/lib/data");
+  const added = (await getStores()).find((s) => s.name === "Green Leaf Market");
+  assert.equal(added?.borough, "Manhattan", "placed by the ZIP on the receipt");
+  console.log("PASS receipt from a new store: exact totals, store added");
 
   // Gemini down: rules answer, nothing breaks.
   const down: ModelCall = async () => {

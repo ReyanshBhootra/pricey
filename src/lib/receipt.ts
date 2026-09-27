@@ -14,6 +14,9 @@ export interface ReceiptLine {
 export interface ParsedReceipt {
   storeId: string | null;
   storeName: string;
+  storeAddress: string; // as printed, for adding a store Pricey doesn't know yet
+  subtotal: number | null; // as printed; we never add the lines up with the model
+  total: number | null;
   lines: ReceiptLine[];
 }
 
@@ -22,6 +25,9 @@ const SCHEMA = {
   properties: {
     storeName: { type: "string", description: "Store name as printed, or empty if not visible" },
     storeId: { type: ["string", "null"], description: "id from KNOWN STORES if it is clearly the same store, else null" },
+    storeAddress: { type: "string", description: "Store street address, city, and ZIP as printed, or empty" },
+    subtotal: { type: ["number", "null"], description: "Subtotal as printed, or null" },
+    total: { type: ["number", "null"], description: "Total as printed (after tax), or null" },
     lines: {
       type: "array",
       items: {
@@ -37,7 +43,7 @@ const SCHEMA = {
       },
     },
   },
-  required: ["storeName", "storeId", "lines"],
+  required: ["storeName", "storeId", "storeAddress", "subtotal", "total", "lines"],
 };
 
 export async function parseReceipt(image: Buffer, mimeType: string): Promise<ParsedReceipt> {
@@ -46,7 +52,10 @@ export async function parseReceipt(image: Buffer, mimeType: string): Promise<Par
   const prompt = `Read this grocery or food receipt from New York City.
 Return every purchased food or grocery line. Skip tax, totals, bag fees, deposits, coupons, and non-food items.
 If a line shows quantity, return the price for ONE unit. Fix obvious abbreviations ("BNLS CHKN THI" is boneless chicken thighs).
-Match to KNOWN ITEMS only when it is really the same product and size class; otherwise itemId null.
+Match to KNOWN ITEMS only when it is really the same product AND the same size, otherwise itemId null:
+- A different size is a different item: a 2 lb bag of rice is not "Rice (5 lb)", a half gallon is not "Whole milk (gallon)".
+- A different cut or kind is a different item: chicken breast is not chicken thighs, basmati or brown rice is not plain white rice.
+- For items sold by the pound in KNOWN ITEMS (names with "(lb)"), price is per pound: "Bananas 2.1 lb $1.45" is 0.69.
 
 KNOWN ITEMS (id: name):
 ${items.map((i) => `${i.id}: ${i.name}`).join("\n")}
@@ -78,9 +87,13 @@ ${stores.map((s) => `${s.id}: ${s.name}, ${s.borough}`).join("\n")}`;
       category: CATEGORIES.includes(l.category) ? l.category : "pantry",
     }));
 
+  const amount = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 && v < 10000 ? Math.round(v * 100) / 100 : null);
   return {
     storeId: data.storeId && storeIds.has(data.storeId) ? data.storeId : null,
     storeName: String(data.storeName ?? "").trim().slice(0, 100),
+    storeAddress: String(data.storeAddress ?? "").trim().slice(0, 160),
+    subtotal: amount(data.subtotal),
+    total: amount(data.total),
     lines,
   };
 }

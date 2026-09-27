@@ -2,7 +2,7 @@
 // these functions do the real work against our data and return plain facts. Gemini never
 // sees a price that didn't come from here, and can't claim a save that didn't happen.
 
-import { addItem, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
+import { addItem, addStore, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { byValue, cityIndex, distanceText, forgetCityCache, matchItems, toFact, type Located } from "./grounding";
 import { describeChange, priceHistory } from "./history";
@@ -330,6 +330,7 @@ export const TOOLS = {
         remove: { type: "array", items: { type: "string" }, description: "Line names to drop" },
         fixes: { type: "array", items: { type: "object", properties: { name: { type: "string" }, price: { type: "number" } }, required: ["name", "price"] } },
         store: { type: "string", description: "Only if they correct which store it was" },
+        borough: { type: "string", enum: [...BOROUGHS], description: "Only when adding a new store and the tool asked which borough" },
       },
     },
     async run(a: Args, ctx: ToolContext) {
@@ -337,10 +338,22 @@ export const TOOLS = {
       if (!pending || pending.kind !== "receipt") return { error: "no_pending_receipt" };
       const { stores, items } = await cityIndex();
       let storeId = pending.storeId;
+      let newStore = false;
       if (str(a.store) || !storeId) {
         const { store, suggestions } = resolveStore(str(a.store) || pending.storeName, stores, ctx);
-        if (!store) return { error: "which_store", did_you_mean: suggestions.map((s) => s.name), hint: "Ask which store the receipt is from." };
-        storeId = store.id;
+        if (store) storeId = store.id;
+        else if (suggestions.length > 1) return { error: "which_store", did_you_mean: suggestions.map((s) => s.name), hint: "Ask which of these it is." };
+        else {
+          // A store Pricey doesn't know yet: add it, placed by the ZIP printed on the receipt.
+          const name = str(a.store) || pending.storeName;
+          const place = findPlace(pending.storeAddress ?? "");
+          const borough = place?.borough ?? (BOROUGHS.includes(str(a.borough) as Borough) ? (str(a.borough) as Borough) : null);
+          if (!name) return { error: "which_store", hint: "Ask the store's name." };
+          if (!borough) return { error: "which_borough", hint: `Ask which borough ${name} is in.` };
+          const spot = place ?? BOROUGH_PLACES[borough];
+          storeId = (await addStore({ name, borough, lat: spot.lat, lng: spot.lng })).id;
+          newStore = true;
+        }
       }
       const drop = new Set((Array.isArray(a.remove) ? a.remove : []).map((r) => str(r).toLowerCase()));
       const fixes = Array.isArray(a.fixes) ? (a.fixes as Args[]) : [];
@@ -358,7 +371,7 @@ export const TOOLS = {
       ctx.patch.pending = null;
       ctx.wrote = true;
       void items;
-      return { saved_prices: saved, store: stores.find((s) => s.id === storeId)?.name };
+      return { saved_prices: saved, store: stores.find((s) => s.id === storeId)?.name ?? pending.storeName, new_store_added: newStore || undefined };
     },
   },
 

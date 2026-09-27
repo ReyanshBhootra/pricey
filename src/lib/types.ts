@@ -28,6 +28,8 @@ export interface Store {
   borough: Borough;
   lat: number;
   lng: number;
+  address?: string; // imported stores only
+  sourceUrl?: string; // where imported prices came from
 }
 
 // Firestore collection: "items"
@@ -51,6 +53,7 @@ export interface Report {
   userId: string; // anon id, phone hash for Photon, etc.
   type: ReportType;
   note?: string; // optional, mainly for events ("free bagels until 5pm")
+  sourceUrl?: string; // imported prices: the page the price was read from
 }
 
 // Firestore collection: "forumPosts"

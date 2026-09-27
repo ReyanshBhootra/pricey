@@ -7,10 +7,12 @@ Real grocery and food prices across NYC, reported by New Yorkers and trusted thr
 ```bash
 npm install
 npm run dev      # http://localhost:3000
-npm run smoke    # checks the core loop: read, vouch, submit
+npm run smoke         # vouching, trust, grounding, price history, shopping list, importer
+npm run test:texting  # texting rules and profiles
+npm run test:agent    # the Gemini texting agent, with a scripted stand-in for Gemini
 ```
 
-No setup needed to start. Without Firebase env vars the app runs on an in-memory copy of the seed data (18 stores, 16 items, about 500 reports, 5 free food events, 5 forum posts). Writes last until the server restarts, and the page re-fetches every 20 seconds so other browsers' reports show up.
+No setup needed to start. Without Firebase env vars the app runs on an in-memory copy of the seed data (18 stores, 16 items, about 1,100 reports spread over six weeks with realistic price drift, free food events, forum posts). Writes last until the server restarts, and the page re-fetches every 20 seconds so other browsers' reports show up.
 
 ## Go live (Firebase + Vercel, about 15 minutes)
 
@@ -21,13 +23,15 @@ No setup needed to start. Without Firebase env vars the app runs on an in-memory
 5. **Check.** `npm run smoke` and `npm run dev`. Same app, now on Firestore, and new reports appear live in other browsers instantly.
 6. **Gemini.** Get a free key at aistudio.google.com/apikey and set `GEMINI_API_KEY` in `.env.local`. Without it, chat still answers from data and receipt scanning shows a friendly "not set up" message.
 7. **Vercel.** vercel.com → Add New Project → import this repo. Paste the six `NEXT_PUBLIC_FIREBASE_*` variables and `GEMINI_API_KEY` under Environment Variables → Deploy.
+8. **Map.** Make a free public token (starts with `pk.`) at account.mapbox.com and set `NEXT_PUBLIC_MAPBOX_TOKEN` in Vercel. Never put it in code: GitHub blocks pushes that contain it. Without it, the Map tab shows a "not set up" note and everything else works.
+9. **Logins.** Firebase console → Authentication → Sign-in method → enable **Phone**. Add test numbers with fixed codes (no real texts, no billing) and add your Vercel domain under Authorized domains. Set `AUTH_SECRET` (any long random string) in Vercel; it signs the login cookie.
 
 Do not deploy to Vercel without Firebase: seed mode keeps data in server memory, which is per instance and gets wiped on serverless.
 
 ## Hour 0 decisions (locked)
 
 - **Schema:** `src/lib/types.ts`. Store, Item, Report, ForumPost, exactly as in the brief. One addition: Report has an optional `note` for events ("free bagels until 5pm").
-- **Nearby view:** plain list, sorted by distance. Mapbox is a stretch goal only if the core loop is done.
+- **Nearby view:** list sorted by distance, or the Map tab. Distances are stored in km and always shown in miles.
 - **Timestamps:** milliseconds since epoch (`Date.now()`), everywhere.
 - **Prices:** dollars as a number (`3.49`), rounded to cents on write.
 - **Events:** a Report with `type: "event"`. `price: 0` means free.
@@ -75,13 +79,37 @@ Everyone imports from here. Do not talk to Firestore directly.
 
 ## Texting and free food alerts (D, done)
 
-- **Text Pricey** (`src/lib/texting.ts`): `eggs 3.99 at key food park slope` reports a price (vouching applies, one vote per phone), `free bagels at myrtle deli until 5pm` posts a deal, `deals in brooklyn` returns "N spots have discounts right now", `alerts on brooklyn` / `stop` manage alerts, anything else is answered by Gemini with the same grounding and fallback as the chat. Phone numbers are never stored, only a one-way hash.
+- **Text Pricey** (`src/lib/texting.ts`, now mostly handled by the agent below; these rules are the backup): `eggs 3.99 at key food park slope` reports a price (vouching applies, one vote per phone), `free bagels at myrtle deli until 5pm` posts a deal, `deals in brooklyn` returns "N spots have discounts right now", `alerts on brooklyn` / `stop` manage alerts, anything else is answered by Gemini with the same grounding and fallback as the chat. Phone numbers are never stored, only a one-way hash.
 - **Free food / deals in the app:** Report page, "Free food or deal" tab. Same pipeline (a report with `type: "event"`). Shows in the Nearby deals banner and in texted alerts. Duplicates show once.
 - **Try it without a phone:** `/text` is an iMessage-style simulator using the same handler.
 - **Real iMessage via Photon:** `bot/` is a tiny Spectrum relay that forwards texts to `/api/text` (locked with `TEXT_BOT_SECRET`) and every few minutes sends subscribers one bundled alert from `/api/text/digest`. Beginner setup in `bot/README.md` (`cd bot && npm run setup && npm start`). Needs your phone, and any tester phones, added in the Photon dashboard.
 - Tests: `npm run test:texting` (parsing and replies), `cd bot && bun test` (the relay, with Photon faked, against a running app).
 
-Every page refreshes live: Firestore listeners when configured, 20 second polling in seed mode. Tracked items are kept in the browser (no login). userId is an anonymous cookie.
+Every page refreshes live: Firestore listeners when configured, 20 second polling in seed mode.
+
+## Added after the hackathon split
+
+- **Texting agent** (`src/lib/agent.ts`, `src/lib/agent-tools.ts`): Gemini reads each text and calls tools (look up prices, report, post a deal, set home, forum, track, alerts, receipts, shopping list). Every fact comes from a tool result, never from the model. Warm welcome once per person, a 👍 tapback after saves, the contact card on first text, replies in the language they text in. If Gemini is down, the rule-based replies take over.
+- **Home ZIP** (`src/lib/places.ts`): every NYC ZIP plus about 75 neighborhoods. Text a ZIP or share a location pin and distances read like "0.6 mi from 11215, 12 min walk".
+- **Map** (`src/components/price-map.tsx`): Mapbox, Snapchat style. Price pins, a glow where people are reporting, filters (cheapest, deals now, trending, popular, favorites, categories), and a store card with directions.
+- **Accounts** (`/login`, `/profile`): phone number and code through Firebase Phone Auth. The same phone is the same account on iMessage. Anonymous reports carry over when you log in. Trust score: after 3 comparisons, people who usually match the crowd count up to 1.5x and people who are usually off count down to 0.5x.
+- **Shopping list** (`/list`, `src/lib/optimizer.ts`): the cheapest sensible trip for a whole list. Walking up to about 15 minutes is free, the subway counts as $2.90 each way, stores more than 3 miles away are skipped, and a second store is only suggested when it is next door (or you walk to both) and saves at least $3. Also in chat and texts ("need eggs, milk and bread").
+- **Price history** (`src/lib/history.ts`): item pages show a month trend line ("Up 17% this month"), and the agent can mention it.
+- **Still $3.99?**: prices nobody has confirmed in a week ask for a one-tap confirm on item pages, and people who text get one check-in a day about a stale price at a store they use.
+- **Real prices** (`npm run import:prices`): see below.
+
+## Real prices from store websites
+
+Your friend's scraper follows `docs/REAL_PRICES.md` and produces `data/stores.csv` and `data/prices.csv`. Then:
+
+```bash
+npm run import:prices -- --check      # validates only: line-by-line errors, unit mix-up warnings
+npm run import:prices                 # writes src/lib/real-prices.json
+npm run import:prices -- --only-real  # same, but hides the made-up demo stores and prices
+npm run import:prices -- --clear      # back to demo data only
+```
+
+Commit `src/lib/real-prices.json` and push. It ships with the app and the data layer merges it in on every read, so it works with or without Firebase and needs no database writes. Real prices replace the demo votes for the same store and item (so made-up reporters can't outvote them), each website counts as one voice, and shoppers who report a different shelf price outvote it the normal way. Store pages say where the starting prices came from.
 
 ## Who owns what
 

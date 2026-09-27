@@ -29,6 +29,7 @@ import type {
   SubmitResult,
   TrustedPrice,
 } from "./types";
+import { mergeReports, mergeStore, mergeStores } from "./real-prices";
 import { computeTrust, distanceKm, setTrustWeights, trustedPrice, trustedPricesByItem, trustedPricesByStore, type TrustStats } from "./vouch";
 
 // ---------- in-memory fallback ----------
@@ -47,9 +48,11 @@ const seedMem = {
 const mem = (g.__priceyMem ??= seedMem);
 
 async function all<T>(db: Firestore | null, name: keyof typeof mem): Promise<T[]> {
-  if (!db) return mem[name] as T[];
-  const snap = await getDocs(collection(db, COLLECTIONS[name]));
-  return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as T);
+  const rows = db ? (await getDocs(collection(db, COLLECTIONS[name]))).docs.map((d) => ({ ...d.data(), id: d.id }) as T) : (mem[name] as T[]);
+  // Scraped real prices ship with the app and are layered in here (see real-prices.ts).
+  if (name === "stores") return mergeStores(rows as Store[]) as T[];
+  if (name === "reports") return mergeReports(rows as Report[]) as T[];
+  return rows;
 }
 
 async function reportsWhere(field: "itemId" | "storeId", value: string): Promise<Report[]> {
@@ -60,7 +63,7 @@ async function reportsWhere(field: "itemId" | "storeId", value: string): Promise
     const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where(field, "==", value)));
     rows = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
   }
-  return withPeople(rows);
+  return withPeople(mergeReports(rows, (r) => r[field] === value));
 }
 
 // ---------- people behind reports: account aliases and trust ----------
@@ -95,7 +98,7 @@ async function refreshTrust(aliases: Map<string, string>) {
   if (Date.now() - trustAt < 60_000) return;
   trustAt = Date.now();
   const db = getDb();
-  const raw = db ? (await getDocs(collection(db, COLLECTIONS.reports))).docs.map((d) => d.data() as Report) : mem.reports;
+  const raw = mergeReports(db ? (await getDocs(collection(db, COLLECTIONS.reports))).docs.map((d) => d.data() as Report) : mem.reports);
   trustStats = computeTrust(raw.map((r) => (aliases.has(r.userId) ? { ...r, userId: aliases.get(r.userId)! } : r)));
   setTrustWeights(new Map([...trustStats].map(([u, s]) => [u, s.weight])));
 }
@@ -124,9 +127,9 @@ export function getItems(): Promise<Item[]> {
 
 export async function getStore(id: string): Promise<Store | null> {
   const db = getDb();
-  if (!db) return mem.stores.find((s) => s.id === id) ?? null;
+  if (!db) return mergeStore(mem.stores.find((s) => s.id === id) ?? null, id);
   const snap = await getDoc(doc(db, COLLECTIONS.stores, id));
-  return snap.exists() ? ({ ...snap.data(), id: snap.id } as Store) : null;
+  return mergeStore(snap.exists() ? ({ ...snap.data(), id: snap.id } as Store) : null, id);
 }
 
 export async function getItem(id: string): Promise<Item | null> {
@@ -175,7 +178,8 @@ export async function getPricesForStores(storeIds: string[], category?: Category
       reports.push(...snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report));
     }
   }
-  reports = await withPeople(reports);
+  const wanted = new Set(storeIds);
+  reports = await withPeople(mergeReports(reports, (r) => wanted.has(r.storeId)));
   const items = category ? await getItems() : [];
   const allowed = category ? new Set(items.filter((i) => i.category === category).map((i) => i.id)) : null;
 
@@ -255,7 +259,7 @@ export async function getActiveEvents(opts: { hours?: number; lat?: number; lng?
     const snap = await getDocs(query(collection(db, COLLECTIONS.reports), where("type", "==", "event")));
     events = snap.docs.map((d) => ({ ...d.data(), id: d.id }) as Report);
   }
-  events = events.filter((e) => e.timestamp >= since);
+  events = mergeReports(events, () => false).filter((e) => e.timestamp >= since);
   if (lat !== undefined && lng !== undefined) {
     const nearby = new Set((await getNearbyStores(lat, lng, radiusKm)).map((s) => s.id));
     events = events.filter((e) => nearby.has(e.storeId));

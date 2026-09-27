@@ -10,6 +10,7 @@ import { describeChange, priceHistory } from "../src/lib/history";
 import { FARE, optimizeList, planText } from "../src/lib/optimizer";
 import { kmToMiles } from "../src/lib/format";
 import { distanceKm } from "../src/lib/vouch";
+import { checkImport, parseCsv } from "../src/lib/real-prices";
 
 async function main() {
   const shoprite = (await getPricesForItem("potatoes-5lb")).find((p) => p.storeId === "shoprite-staten-island");
@@ -109,6 +110,20 @@ async function main() {
   }
   const none = await optimizeList(["eggs"], null, match);
   assert.ok(none.best && none.best.stops[0].fare === 0 && none.best.stops[0].miles === null, "no location: no made-up distances");
+
+  // Real price importer: quoted CSV, unit mix-ups, bad rows, sale prices.
+  assert.deepEqual(parseCsv('\uFEFFa,b\r\n"x, y","say ""hi"""\r\n'), [["a", "b"], ["x, y", 'say "hi"']]);
+  const storesCsv = "store_id,name,address,borough,lat,lng,source_url\naldi-rego-park,Aldi Rego Park,\"96-05 Queens Blvd, Queens\",queens,40.7296,-73.8617,https://www.aldi.us/\n";
+  const good = checkImport(storesCsv, "store_id,item_id,price,sale_price,listed_as,product_name,source_url,scraped_at\naldi-rego-park,milk-gallon,3.29,2.99,,Milk,,2026-09-25\naldi-rego-park,eggs-dozen,0.25,,per egg,Eggs,,2026-09-25\n", { now: Date.parse("2026-09-26") });
+  assert.deepEqual(good.errors, []);
+  assert.equal(good.data.stores[0].borough, "Queens");
+  assert.equal(good.data.reports[0].price, 2.99, "sale price is what you pay");
+  assert.equal(good.data.reports[0].userId, "import:aldi.us", "the site counts as one voice");
+  assert.ok(good.warnings.some((w) => /far from the usual/.test(w)), "per-egg price flagged as a unit mix-up");
+  const bad = checkImport(storesCsv, "store_id,item_id,price,scraped_at\nnope,caviar,abc,26/09/2026\n");
+  assert.equal(bad.errors.length, 1);
+  assert.match(bad.errors[0], /line 2: .*isn't in stores.csv.*isn't one of the 16.*should be a number.*should look like/);
+  console.log("importer: validates rows, flags unit mix-ups, uses sale prices");
 
   console.log("OK");
   process.exit(0);

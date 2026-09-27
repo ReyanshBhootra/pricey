@@ -7,6 +7,8 @@ import { DealForm } from "@/components/deal-form";
 import { chipClass } from "@/components/chip";
 import { cn } from "@/lib/utils";
 import { getItems, getPricesForItem, getStores } from "@/lib/data";
+import { LoginGate } from "@/components/login-gate";
+import { sessionUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,8 @@ export default async function ReportPage({ searchParams }: PageProps<"/report">)
   const storeId = typeof sp.store === "string" ? sp.store : "";
   const newItem = typeof sp.newItem === "string" ? sp.newItem.slice(0, 80) : undefined;
   const deal = sp.type === "deal";
-  const [items, stores] = await Promise.all([getItems(), getStores()]);
+  const [items, stores, account] = await Promise.all([getItems(), getStores(), sessionUserId()]);
+  const here = `/report?${new URLSearchParams(Object.entries(sp).filter((e): e is [string, string] => typeof e[1] === "string"))}`;
   const sortedStores = [...stores].sort((a, b) => a.name.localeCompare(b.name));
   const sortedItems = [...items].sort((a, b) => a.name.localeCompare(b.name));
   const item = items.find((i) => i.id === itemId);
@@ -32,7 +35,9 @@ export default async function ReportPage({ searchParams }: PageProps<"/report">)
         <Link href={`/report${storeId ? `?store=${storeId}` : ""}`} className={chipClass(!deal)} scroll={false}>Price</Link>
         <Link href={`/report?type=deal${storeId ? `&store=${storeId}` : ""}`} className={cn(chipClass(deal), "normal-case")} scroll={false}>Free food or deal</Link>
       </div>
-      {deal ? (
+      {!account ? (
+        <LoginGate action={deal ? "share free food or a deal" : "report a price"} next={here} />
+      ) : deal ? (
         <DealForm stores={sortedStores} storeId={storeId} />
       ) : (
         <>

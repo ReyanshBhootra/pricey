@@ -4,7 +4,9 @@ import { LiveRefresh } from "@/components/live-refresh";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { LoginGate } from "@/components/login-gate";
 import { createPostAction } from "@/lib/actions";
+import { sessionUserId } from "@/lib/session";
 import { getForumPosts } from "@/lib/data";
 import { timeAgo } from "@/lib/format";
 import { BOROUGHS, type Borough } from "@/lib/types";
@@ -14,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function ForumPage({ searchParams }: PageProps<"/forum">) {
   const sp = await searchParams;
   const borough: Borough = BOROUGHS.includes(sp.borough as Borough) ? (sp.borough as Borough) : "Manhattan";
-  const posts = await getForumPosts(borough);
+  const [posts, account] = await Promise.all([getForumPosts(borough), sessionUserId()]);
 
   return (
     <>
@@ -29,6 +31,9 @@ export default async function ForumPage({ searchParams }: PageProps<"/forum">) {
         ))}
       </div>
 
+      {!account ? (
+        <LoginGate action="post in the forum" next={`/forum?borough=${encodeURIComponent(borough)}`} />
+      ) : (
       <form action={createPostAction} className="mb-5 rounded-xl border bg-card p-3 shadow-xs">
         <input type="hidden" name="borough" value={borough} />
         <Textarea name="text" required maxLength={500} rows={3} placeholder={`Share a deal or ask something in ${borough}`} className="resize-none" />
@@ -36,6 +41,7 @@ export default async function ForumPage({ searchParams }: PageProps<"/forum">) {
           <Button>Post</Button>
         </div>
       </form>
+      )}
 
       {posts.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">No posts in {borough} yet. Start the conversation.</p>

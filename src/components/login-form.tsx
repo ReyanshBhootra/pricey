@@ -22,19 +22,25 @@ function toE164(raw: string): string | null {
 
 function friendly(e: unknown): string {
   const code = (e as { code?: string })?.code ?? "";
+  const message = (e as { message?: string })?.message ?? "";
   const map: Record<string, string> = {
     "auth/invalid-phone-number": "That phone number doesn't look right.",
     "auth/invalid-verification-code": "That code isn't right. Check the text and try again.",
     "auth/code-expired": "That code expired. Send a new one.",
     "auth/too-many-requests": "Too many tries. Wait a few minutes and try again.",
     "auth/quota-exceeded": "We've hit today's texting limit. Try again later.",
-    "auth/operation-not-allowed": "Phone login isn't turned on yet (Firebase, Authentication, Sign-in method, Phone).",
+    "auth/operation-not-allowed": /region/i.test(message)
+      ? "Firebase is blocking texts to this country. In Firebase: Authentication, Settings, SMS region policy, allow United States."
+      : "Phone login is off for this Firebase project (Authentication, Sign-in method, Phone). If it's already on, check that Vercel's NEXT_PUBLIC_FIREBASE_* values are for this same project.",
+    "auth/invalid-app-credential": "The robot check didn't pass. Reload the page and try again (and make sure this site is under Authentication, Settings, Authorized domains).",
+    "auth/admin-restricted-operation": "Sign-ups are restricted in Firebase (Authentication, Settings, User actions).",
     "auth/unauthorized-domain": "This website isn't allowed to log in yet (Firebase, Authentication, Settings, Authorized domains).",
     "auth/billing-not-enabled": "Real SMS codes need Firebase billing. Use one of the test numbers for the demo.",
     "auth/captcha-check-failed": "The robot check failed. Reload the page and try again.",
     "auth/network-request-failed": "No connection. Check your internet and try again.",
   };
-  return map[code] ?? "Something went wrong. Please try again.";
+  // Unknown errors show their code, so a setup problem can be looked up instead of guessed.
+  return map[code] ?? `Something went wrong${code ? ` (${code})` : ""}. Please try again.`;
 }
 
 const readList = (key: string) => {

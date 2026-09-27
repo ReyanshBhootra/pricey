@@ -1,5 +1,6 @@
 import { geminiEnabled } from "@/lib/gemini";
 import { parseReceipt } from "@/lib/receipt";
+import { sessionUserId } from "@/lib/session";
 
 // Room for the 45 second Gemini time limit on a receipt photo.
 export const maxDuration = 60;
@@ -8,6 +9,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
 
 export async function POST(req: Request) {
+  if (!(await sessionUserId())) return Response.json({ error: "Log in to scan receipts." }, { status: 401 });
   if (!geminiEnabled()) {
     return Response.json({ error: "Receipt scanning is not set up yet (GEMINI_API_KEY missing). Type the price instead." }, { status: 503 });
   }

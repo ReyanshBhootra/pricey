@@ -1,6 +1,6 @@
 "use server";
 
-import { actingUserId, sessionUserId } from "./session";
+import { sessionUserId } from "./session";
 import { BOROUGH_PLACES, findPlace, placeFromCoords, placeFromZip } from "./places";
 import { WHERE_COOKIE, type Where } from "./where";
 import { cookies } from "next/headers";
@@ -10,14 +10,20 @@ import { BOROUGH_CENTERS, inNyc } from "./format";
 import { findBorough, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
 
-// Reports and posts belong to the logged-in account, or to this browser until they log in.
-const userId = actingUserId;
+// Adding anything (prices, deals, posts, confirmations) needs a logged-in account.
+const LOGIN = "Log in to add to Pricey.";
+const userId = async () => {
+  const id = await sessionUserId();
+  if (!id) throw Object.assign(new Error(LOGIN), { login: true });
+  return id;
+};
 
 export type ReportState = { ok: true; result: SubmitResult } | { ok: false; error: string } | null;
 
 const NEW = "__new";
 
 export async function submitReportAction(_prev: ReportState, form: FormData): Promise<ReportState> {
+  if (!(await sessionUserId())) return { ok: false, error: LOGIN };
   const get = (k: string) => String(form.get(k) ?? "").trim();
   let itemId = get("itemId");
   let storeId = get("storeId");
@@ -57,6 +63,7 @@ export type ReceiptSubmitState = { ok: true; saved: number; changed: number } | 
 
 // Saves the lines a person confirmed after scanning a receipt, one report per line.
 export async function submitReceiptAction(store: { storeId: string | null; newStoreName?: string; newStoreBorough?: string }, lines: ReceiptLineInput[]): Promise<ReceiptSubmitState> {
+  if (!(await sessionUserId())) return { ok: false, error: LOGIN };
   const good = lines.filter((l) => Number.isFinite(l.price) && l.price >= 0 && l.price <= 1000 && (l.itemId || l.name?.trim())).slice(0, 60);
   if (!good.length) return { ok: false, error: "Pick at least one line to save." };
 
@@ -117,6 +124,7 @@ export async function syncListsAction(lists: { tracked?: string[]; favorites?: s
 export type DealState = { ok: true; note: string } | { ok: false; error: string } | null;
 
 export async function submitDealAction(_prev: DealState, form: FormData): Promise<DealState> {
+  if (!(await sessionUserId())) return { ok: false, error: LOGIN };
   const storeId = String(form.get("storeId") ?? "");
   const what = String(form.get("what") ?? "").trim();
   const priceText = String(form.get("price") ?? "").trim();
@@ -136,13 +144,14 @@ export async function submitDealAction(_prev: DealState, form: FormData): Promis
 export async function createPostAction(form: FormData) {
   const borough = String(form.get("borough")) as Borough;
   const text = String(form.get("text") ?? "").trim().slice(0, 500);
-  if (!BOROUGHS.includes(borough) || !text) return;
+  if (!BOROUGHS.includes(borough) || !text || !(await sessionUserId())) return;
   await createForumPost({ borough, text, userId: await userId() });
   revalidatePath("/forum");
 }
 
 // "Still $3.99?" -> yes: a fresh vote for the same price, which keeps it trusted and current.
 export async function confirmPriceAction(itemId: string, storeId: string, price: number): Promise<{ ok: boolean; error?: string }> {
+  if (!(await sessionUserId())) return { ok: false, error: LOGIN };
   if (!itemId || !storeId || !Number.isFinite(price) || price < 0 || price > 1000) return { ok: false, error: "Something's off with that price." };
   try {
     const [item, store] = await Promise.all([getItem(itemId), getStore(storeId)]);

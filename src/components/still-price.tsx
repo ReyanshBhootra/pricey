@@ -3,6 +3,7 @@
 // Shown on prices nobody has confirmed in a week: "Still $3.99?" Yes adds a fresh vote;
 // "Changed" opens the report form for that item and store.
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Check } from "lucide-react";
 import { confirmPriceAction } from "@/lib/actions";
@@ -10,6 +11,7 @@ import { money } from "@/lib/format";
 
 export function StillPrice({ itemId, storeId, price, estimated }: { itemId: string; storeId: string; price: number; estimated?: boolean }) {
   const [pending, start] = useTransition();
+  const path = usePathname();
   const [state, setState] = useState<"ask" | "done" | string>("ask");
 
   if (state === "done") {
@@ -38,7 +40,14 @@ export function StillPrice({ itemId, storeId, price, estimated }: { itemId: stri
       <Link href={`/report?item=${itemId}&store=${storeId}`} className="font-medium text-primary hover:underline">
         Changed
       </Link>
-      {state !== "ask" && <span className="basis-full text-right text-destructive">{state}</span>}
+      {state !== "ask" &&
+        (state.startsWith("Log in") ? (
+          <Link href={`/login?next=${encodeURIComponent(path)}`} className="basis-full text-right text-primary hover:underline">
+            Log in to confirm prices
+          </Link>
+        ) : (
+          <span className="basis-full text-right text-destructive">{state}</span>
+        ))}
     </span>
   );
 }

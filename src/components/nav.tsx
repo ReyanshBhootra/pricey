@@ -44,7 +44,7 @@ export function Nav({ signedIn }: { signedIn: boolean }) {
   return (
     <>
       <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md [view-transition-name:site-header]">
-        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-[100rem] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-1.5 font-display text-[1.7rem] leading-none" aria-label="Pricey home">
             pricey
             <span aria-hidden className="sticker grid size-6 place-items-center rounded-full bg-lime text-[0.7rem] text-lime-foreground [--tilt:12deg]">

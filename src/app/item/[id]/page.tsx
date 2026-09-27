@@ -3,16 +3,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/components/live-refresh";
 import { PriceList } from "@/components/price-list";
+import { PriceTrend } from "@/components/price-trend";
 import { TrackButton } from "@/components/track-button";
 import { Button } from "@/components/ui/button";
 import { getItem, getPricesForItem, getStores } from "@/lib/data";
 import { money } from "@/lib/format";
+import { priceHistory } from "@/lib/history";
 
 export const dynamic = "force-dynamic";
 
 export default async function ItemPage({ params }: PageProps<"/item/[id]">) {
   const { id } = await params;
-  const [item, stores, prices] = await Promise.all([getItem(id), getStores(), getPricesForItem(id)]);
+  const [item, stores, prices, history] = await Promise.all([getItem(id), getStores(), getPricesForItem(id), priceHistory(id)]);
   if (!item) notFound();
   const low = prices[0]?.price;
   const high = prices.at(-1)?.price;
@@ -30,6 +32,7 @@ export default async function ItemPage({ params }: PageProps<"/item/[id]">) {
           {money(low!)} to {money(high!)} across {prices.length} stores. Save {money(high! - low!)} by shopping at the cheapest.
         </p>
       )}
+      <PriceTrend history={history} />
       <div className="mt-3">
         <PriceList prices={prices} stores={new Map(stores.map((s) => [s.id, s]))} />
       </div>

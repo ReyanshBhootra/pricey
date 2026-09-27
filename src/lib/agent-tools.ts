@@ -5,6 +5,8 @@
 import { addItem, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { byValue, cityIndex, distanceText, forgetCityCache, matchItems, toFact, type Located } from "./grounding";
+import { describeChange, priceHistory } from "./history";
+import { optimizeList, planForAgent } from "./optimizer";
 import { BOROUGH_PLACES, findPlace, placeFromZip } from "./places";
 import { findBorough, matchStore, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type Item, type Store, type UserProfile } from "./types";
@@ -81,8 +83,10 @@ export const TOOLS = {
           continue;
         }
         const facts = pricesFor(item.id).map((p) => toFact(p, storeById, where)).sort(byValue).slice(0, 5);
+        const trend = describeChange((await priceHistory(item.id)).changePct);
         results.push({
           item: item.name,
+          city_trend: trend ?? undefined,
           prices: facts.map((f) => ({
             price: money(f.price),
             store: f.storeName,
@@ -94,6 +98,24 @@ export const TOOLS = {
         });
       }
       return { measured_from: placeName(where), results, not_tracked_yet: unknown, known_items: unknown.length ? items.map((i) => i.name) : undefined };
+    },
+  },
+
+  shopping_list: {
+    description: "Plan the cheapest sensible trip for a whole shopping list near them. Counts walking vs a $2.90 subway ride and only suggests a second store when it's close by and really saves money. Use for 'where should I buy eggs, milk and bread' or any list of 2+ items.",
+    parameters: {
+      type: "object",
+      properties: {
+        items: { type: "array", items: { type: "string" }, description: "Everything on their list, as they said it" },
+        place: { type: "string", description: "ZIP, neighborhood, or borough for THIS list. Leave empty to use their saved home." },
+      },
+      required: ["items"],
+    },
+    async run(a: Args, ctx: ToolContext) {
+      const names = (Array.isArray(a.items) ? a.items : []).map(str).filter(Boolean);
+      const where = resolveWhere(str(a.place), ctx);
+      const r = await optimizeList(names, where, resolveItem);
+      return { ...planForAgent(r), tip: where ? undefined : "No location yet: ask for their ZIP so distances and fares are real." };
     },
   },
 

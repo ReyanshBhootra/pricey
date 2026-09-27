@@ -3,7 +3,7 @@
 import { actingUserId, sessionUserId } from "./session";
 import { findPlace, placeFromZip } from "./places";
 import { revalidatePath } from "next/cache";
-import { addItem, addStore, createForumPost, saveUser, submitReport } from "./data";
+import { addItem, addStore, createForumPost, getItem, getStore, saveUser, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
 import { dealsDigest, handleText, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
@@ -150,4 +150,19 @@ export async function createPostAction(form: FormData) {
   if (!BOROUGHS.includes(borough) || !text) return;
   await createForumPost({ borough, text, userId: await userId() });
   revalidatePath("/forum");
+}
+
+// "Still $3.99?" -> yes: a fresh vote for the same price, which keeps it trusted and current.
+export async function confirmPriceAction(itemId: string, storeId: string, price: number): Promise<{ ok: boolean; error?: string }> {
+  if (!itemId || !storeId || !Number.isFinite(price) || price < 0 || price > 1000) return { ok: false, error: "Something's off with that price." };
+  try {
+    const [item, store] = await Promise.all([getItem(itemId), getStore(storeId)]);
+    if (!item || !store) return { ok: false, error: "That item or store is gone." };
+    await submitReport({ itemId, storeId, price, userId: await userId(), type: "price" });
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    console.error("confirmPriceAction failed:", e);
+    return { ok: false, error: "Couldn't save that. Try again." };
+  }
 }

@@ -76,6 +76,11 @@ async function main() {
   const second = await handleText(newbie, "how much are eggs near 11215?");
   assert.doesNotMatch(second.reply, /Hey! I'm Pricey/, "welcome only once");
 
+  // Backup "list:" rule plans from their saved home, in miles.
+  const list = await handleText(newbie, "list: eggs, milk, bread");
+  assert.match(list.reply, /^Best single stop: .+ \((\d|\.)+ ?(mi|ft)/);
+  assert.doesNotMatch(list.reply, /km/);
+
   // Same phone, spamming a price: counts once.
   for (let i = 0; i < 5; i++) await say("milk 0.50 at trader joes union sq");
   assert.match(await say("milk 0.50 at trader joes union sq"), /Thanks/);

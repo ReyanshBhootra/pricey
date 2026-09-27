@@ -55,6 +55,15 @@ async function main() {
   assert.match(r.reply, /"measured_from":"11215"/);
   assert.match(r.reply, /mi from 11215/);
   assert.equal(r.react, null, "reading doesn't earn a tapback");
+  assert.match(r.reply, /"city_trend":"Up \d+% this month"/, "lookups carry the monthly trend");
+
+  // Shopping list: planned from home, walking counted, unknown items flagged.
+  r = await send("need eggs milk bread and dragonfruit", [{ name: "shopping_list", args: { items: ["eggs", "milk", "bread", "dragonfruit"] } }]);
+  assert.match(r.reply, /"measured_from":"11215"/);
+  assert.match(r.reply, /"best_one_store":\{"store":"[^"]+","distance":"[^"]*mi/);
+  assert.match(r.reply, /"not_tracked_yet":\["dragonfruit"\]/);
+  assert.equal(r.react, null);
+  console.log("PASS shopping list planned from home ZIP");
   r = await send("eggs near astoria?", [{ name: "lookup_prices", args: { items: ["eggs"], place: "astoria" } }]);
   assert.match(r.reply, /mi from Astoria/);
   r = await send("and in the bronx?", [{ name: "lookup_prices", args: { items: ["eggs"], place: "bronx" } }]);

@@ -1,4 +1,4 @@
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, ListChecks, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { chipClass } from "@/components/chip";
@@ -126,6 +126,17 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
       <Suspense>
         <LocationPicker label={loc} />
       </Suspense>
+      <Link
+        href={`/list?${new URLSearchParams({ lat: String(lat), lng: String(lng), loc })}`}
+        className="mb-4 flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm shadow-xs hover:bg-accent"
+      >
+        <ListChecks className="size-4 text-primary" />
+        <span>
+          <span className="font-medium">Plan a shopping list</span>
+          <span className="text-muted-foreground"> · cheapest trip, fares counted</span>
+        </span>
+        <ChevronRight className="ml-auto size-4 text-muted-foreground" />
+      </Link>
 
       <TrackedAlerts
         changes={changes.map((c) => ({

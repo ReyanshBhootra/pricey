@@ -6,6 +6,10 @@ import { getNearbyStores, getPricesForItem, getActiveEvents, submitReport } from
 import { computeTrust, setTrustWeights, trustedPrice } from "../src/lib/vouch";
 import { answerFromData, buildContext, matchItems } from "../src/lib/grounding";
 import { SEED_ITEMS } from "../src/lib/seed";
+import { describeChange, priceHistory } from "../src/lib/history";
+import { FARE, optimizeList, planText } from "../src/lib/optimizer";
+import { kmToMiles } from "../src/lib/format";
+import { distanceKm } from "../src/lib/vouch";
 
 async function main() {
   const shoprite = (await getPricesForItem("potatoes-5lb")).find((p) => p.storeId === "shoprite-staten-island");
@@ -67,6 +71,44 @@ async function main() {
   assert.equal(trustedPrice(contested)?.votes, 2, "shown votes still count people");
   setTrustWeights(new Map());
   console.log("trust: 2 reliable voices beat 3 unreliable ones");
+
+  // Price history: the seed has eggs climbing ~18% over the month.
+  const eggTrend = await priceHistory("eggs-dozen");
+  assert.ok(eggTrend.points.length > 20, "a point for most days");
+  assert.ok((eggTrend.changePct ?? 0) >= 8, `eggs should be up, got ${eggTrend.changePct}%`);
+  assert.match(describeChange(eggTrend.changePct)!, /^Up \d+% this month$/);
+  assert.equal(describeChange(1), "Steady this month");
+  console.log("history:", describeChange(eggTrend.changePct), `(${eggTrend.points[0].price} -> ${eggTrend.points.at(-1)!.price})`);
+
+  // Shopping list: nothing far away, fares counted, second stops only when close and worth it.
+  const match = (n: string, all: Parameters<typeof matchItems>[1]) => matchItems(n, all)[0] ?? null;
+  const spots = [
+    { lat: 40.7342, lng: -73.9897, label: "Union Sq" },
+    { lat: 40.6712, lng: -73.9814, label: "11215" },
+    { lat: 40.5795, lng: -74.1502, label: "Staten Island" },
+    { lat: 40.8367, lng: -73.8903, label: "Bronx" },
+  ];
+  for (const where of spots) {
+    const r = await optimizeList(["eggs", "milk", "bread", "bananas", "unicorn meat"], where, match);
+    assert.deepEqual(r.unknown, ["unicorn meat"]);
+    assert.ok(r.best, `a plan near ${where.label}`);
+    for (const plan of [r.best, r.split].filter((p) => p !== null)) {
+      for (const st of plan.stops) {
+        assert.ok(st.miles !== null && st.miles <= 3, `${st.store.name} is ${st.miles} mi from ${where.label}: too far`);
+        assert.equal(st.fare, st.miles! > 0.75 && st === plan.stops[0] ? FARE * 2 : 0, "fare only when not walkable, and once");
+      }
+      assert.equal(plan.total, Math.round((plan.groceries + plan.stops[0].fare) * 100) / 100, "total includes the fare");
+    }
+    if (r.split) {
+      const [a, b] = r.split.stops;
+      const apart = kmToMiles(distanceKm(a.store.lat, a.store.lng, b.store.lat, b.store.lng));
+      assert.ok(apart <= 0.5 || (a.miles! <= 0.75 && b.miles! <= 0.75), "second stop must be next door or both walkable");
+      assert.ok(r.split.saves >= 3 || r.split.missing.length < r.best!.missing.length, "a split must save at least $3 or cover more");
+    }
+    console.log(`list near ${where.label}:`, planText(r).split("\n")[0], r.split ? `| split saves ${r.split.saves}` : "| no split");
+  }
+  const none = await optimizeList(["eggs"], null, match);
+  assert.ok(none.best && none.best.stops[0].fare === 0 && none.best.stops[0].miles === null, "no location: no made-up distances");
 
   console.log("OK");
   process.exit(0);

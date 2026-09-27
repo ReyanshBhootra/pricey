@@ -59,6 +59,13 @@ const BASE_PRICE: Record<string, number> = {
 };
 
 const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+
+// How much each item's price moved over the last ~6 weeks (0.18 = up 18%).
+const TREND: Record<string, number> = {
+  "eggs-dozen": 0.18, "milk-gallon": 0.04, "bananas-lb": -0.03, "avocado": -0.08, "chicken-thighs-lb": 0.06,
+  "ground-beef-lb": 0.09, "coffee-drip-small": 0.05, "latte-12oz": 0.03, "rice-5lb": 0.02, "bread-loaf": 0.03,
+};
 
 function buildReports(): Report[] {
   const rand = rng(42);
@@ -79,15 +86,29 @@ function buildReports(): Report[] {
       if (store.id === "shoprite-staten-island" && item.id === "potatoes-5lb") continue; // demo case below
 
       const price = Math.round(BASE_PRICE[item.id] * markup * (0.85 + rand() * 0.3) * 100) / 100;
-      const votes = 1 + Math.floor(rand() * 4);
-      // Distinct users per store and item, since vouching counts one vote per person.
-      const start = Math.floor(rand() * 40);
-      for (let v = 0; v < votes; v++) {
-        add({ itemId: item.id, storeId: store.id, price, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${start + v}`, type: "price" });
-      }
-      if (rand() < 0.25) {
+      // Price history: the same store's price drifted over the last ~6 weeks by the item's trend
+      // (eggs up ~18%, avocados down, and so on). priceAt(0) is today's price.
+      const trend = TREND[item.id] ?? 0;
+      const priceAt = (daysAgo: number) => Math.round((price / (1 + trend)) * (1 + trend * (1 - Math.min(daysAgo, 40) / 40)) * 100) / 100;
+      // Distinct people per round, since vouching counts one vote per person.
+      let user = Math.floor(rand() * 40);
+      // Everyone in a round saw the same shelf price.
+      const round = (daysAgo: number, voters: number, spreadHours: number) => {
+        for (let v = 0; v < voters; v++) {
+          const ts = now - daysAgo * DAY - Math.floor(rand() * spreadHours) * HOUR;
+          add({ itemId: item.id, storeId: store.id, price: priceAt(daysAgo), timestamp: ts, userId: `seed-user-${user++}`, type: "price" });
+        }
+      };
+      round(35 + Math.floor(rand() * 7), 1 + Math.floor(rand() * 2), 24); // about 5 to 6 weeks ago
+      round(14 + Math.floor(rand() * 10), 1 + Math.floor(rand() * 2), 24); // 2 to 3 weeks ago
+      // Most prices were confirmed in the last 3 days; about 1 in 5 not for over a week (stale).
+      const stale = rand() < 0.2;
+      const recent = 2 + Math.floor(rand() * 3);
+      if (stale) round(8 + Math.floor(rand() * 5), recent, 24);
+      else round(0, recent, 72);
+      if (!stale && rand() < 0.25) {
         // One outlier so vouching has something to beat.
-        add({ itemId: item.id, storeId: store.id, price: Math.round(price * 0.7 * 100) / 100, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${start + votes}`, type: "price" });
+        add({ itemId: item.id, storeId: store.id, price: Math.round(price * 0.7 * 100) / 100, timestamp: now - Math.floor(rand() * 72) * HOUR, userId: `seed-user-${user++}`, type: "price" });
       }
     }
   }

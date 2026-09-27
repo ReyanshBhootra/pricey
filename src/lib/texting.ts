@@ -31,6 +31,7 @@ import { phoneLast4, phoneUserId, phoneUserId as textUserId } from "./phone";
 import { runAgent, type Channel, type ModelCall } from "./agent";
 import { parseReceipt } from "./receipt";
 import { getUser, saveUser } from "./data";
+import { optimizeList, planText } from "./optimizer";
 import { coordsFromText, placeFromCoords, placeFromZip } from "./places";
 export { textUserId };
 
@@ -40,6 +41,7 @@ export const HELP = [
   "- Report: eggs 3.99 at key food park slope",
   "- Free food: free bagels at myrtle deli until 5pm",
   "- Deals near you: deals in queens",
+  "- Plan a trip: list: eggs, milk, bread",
   "- Alerts: alerts on brooklyn (stop to end)",
 ].join("\n");
 
@@ -298,6 +300,12 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
     if (place) {
       patch.home = { label: place.label, lat: place.lat, lng: place.lng, borough: place.borough };
       out = { reply: `Got it, ${place.label} (${place.borough}). I'll use that for distances. Ask me how much anything is!`, react: "👍", action: null };
+    } else if (/^(?:shopping )?list\s*[:\-]?\s*\S/i.test(text)) {
+      // "list: eggs, milk, bread" -> the cheapest sensible trip from their home.
+      const names = text.replace(/^(?:shopping )?list\s*[:\-]?\s*/i, "").split(/,|\band\b|\n/);
+      const h = patch.home ?? user.home;
+      const r = await optimizeList(names, h ? { lat: h.lat, lng: h.lng, label: h.label, approximate: h.approximate } : null, (n, items) => matchItems(n, items)[0] ?? null);
+      out = { reply: planText(r), action: null };
     } else if (first && /^(hi|hey|hello|yo|sup|start|help|\?)\W*$/i.test(text)) {
       out = { reply: welcome(user), action: null };
     } else {

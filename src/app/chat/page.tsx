@@ -10,8 +10,8 @@ export default async function ChatPage() {
   const where = await getWhere();
   return (
     <>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">Ask Pricey</h1>
-      <p className="mb-3 text-sm text-muted-foreground">
+      <h1 className="mb-2 text-[2.6rem] leading-[0.95]">Ask Pricey</h1>
+      <p className="mb-4 text-muted-foreground">
         Prices {where ? nearText(where) : "across NYC"}, cheap meals, and free food, from real reports.
       </p>
       <Suspense>

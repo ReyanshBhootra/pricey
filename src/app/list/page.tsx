@@ -1,10 +1,12 @@
-import { Bus, Check, Footprints, ListChecks, MapPin, Plus } from "lucide-react";
+import { Bus, Check, Footprints, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { CategoryIcon } from "@/components/category";
 import { chipClass } from "@/components/chip";
 import { LocationPicker } from "@/components/location-picker";
-import { Card } from "@/components/ui/card";
+import { Price } from "@/components/price";
+import { Sticker } from "@/components/sticker";
 import { getItems } from "@/lib/data";
 import { money } from "@/lib/format";
 import { matchItems, type Located } from "@/lib/grounding";
@@ -15,35 +17,44 @@ import { getWhere, isExact } from "@/lib/where";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Shopping list" };
 
+// One store on the trip. Works on the dark hero card and on light ones: text inherits its color.
 function StopCard({ stop, step }: { stop: Stop; step?: number }) {
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <Link href={`/store/${stop.store.id}`} className="font-semibold hover:underline">
-          {step ? `${step}. ` : ""}
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <Link href={`/store/${stop.store.id}`} className="flex items-center gap-2 text-lg font-bold hover:underline">
+          {step && <span className="grid size-7 place-items-center rounded-full bg-lime font-display text-sm text-lime-foreground">{step}</span>}
           {stop.store.name}
         </Link>
         {stop.miles !== null && (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-xs opacity-75">
             {stop.fare ? <Bus className="size-3.5" /> : <Footprints className="size-3.5" />}
-            {stop.distance} · {stop.fare ? `${money(stop.fare)} round trip by subway or bus` : `${stop.walkMin} min walk`}
+            {stop.distance}, {stop.fare ? `${money(stop.fare)} round trip by subway or bus` : `${stop.walkMin} min walk`}
           </span>
         )}
       </div>
-      <ul className="divide-y rounded-lg border text-sm">
+      <ul className="divide-y rounded-2xl bg-card text-sm text-card-foreground">
         {stop.items.map(({ item, price, estimated }) => (
-          <li key={item.id} className="flex justify-between gap-3 px-3 py-2">
-            <Link href={`/item/${item.id}`} className="truncate hover:underline">
+          <li key={item.id} className="flex items-center gap-3 px-3 py-2">
+            <CategoryIcon category={item.category} className="size-6" />
+            <Link href={`/item/${item.id}`} className="min-w-0 flex-1 truncate hover:underline">
               {item.name}
             </Link>
-            <span className="tabular-nums">
-              {estimated && <span className="mr-1.5 text-xs text-muted-foreground">est.</span>}
-              {money(price)}
-            </span>
+            {estimated && <span className="text-xs text-muted-foreground">estimate</span>}
+            <Price value={price} className="text-base" />
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <h2 className="mb-3 flex items-center gap-2.5 text-lg font-bold">
+      <span className="grid size-8 place-items-center rounded-full bg-primary font-display text-base text-primary-foreground">{n}</span>
+      {children}
+    </h2>
   );
 }
 
@@ -67,62 +78,69 @@ export default async function ListPage({ searchParams }: PageProps<"/list">) {
 
   return (
     <>
-      <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold tracking-tight">
-        <ListChecks className="size-6 text-primary" /> Shopping list
-      </h1>
-      <p className="mb-4 text-sm text-muted-foreground">
+      <h1 className="mb-2 text-[2.6rem] leading-[0.95]">Shopping list</h1>
+      <p className="mb-6 text-muted-foreground">
         The cheapest sensible trip. Walking is free, the subway is {money(2.9)} each way, and we only suggest a second store when it&apos;s close by and really saves you money.
       </p>
 
-      <h2 className="mb-2 text-sm font-semibold">1. Where are you starting from?</h2>
+      <Step n={1}>Where are you starting from?</Step>
       <Suspense>
         <LocationPicker where={saved && { label: saved.label, kind: saved.kind }} />
       </Suspense>
 
-      <h2 className="mb-2 flex items-baseline justify-between gap-2 text-sm font-semibold">
-        2. What do you need?
+      <div className="flex items-baseline justify-between gap-2">
+        <Step n={2}>What do you need?</Step>
         {chosen.length > 0 && (
-          <Link href="/list" replace scroll={false} className="text-xs font-normal text-muted-foreground hover:text-foreground">
+          <Link href="/list" replace scroll={false} className="text-sm font-semibold text-muted-foreground underline underline-offset-2 hover:text-foreground">
             Clear list
           </Link>
         )}
-      </h2>
+      </div>
       <div className="mb-6 flex flex-wrap gap-2">
         {items.map((i) => (
-          <Link key={i.id} href={href(i.id)} replace scroll={false} className={cn(chipClass(chosenIds.has(i.id)), "normal-case")} aria-pressed={chosenIds.has(i.id)}>
-            {chosenIds.has(i.id) ? <Check className="mr-1 size-3.5" /> : <Plus className="mr-1 size-3.5 text-muted-foreground" />}
+          <Link key={i.id} href={href(i.id)} replace scroll={false} className={cn(chipClass(chosenIds.has(i.id)), "pl-1.5")} aria-pressed={chosenIds.has(i.id)}>
+            {chosenIds.has(i.id) ? (
+              <span className="grid size-6 place-items-center rounded-full bg-lime text-lime-foreground">
+                <Check className="size-3.5" strokeWidth={3} />
+              </span>
+            ) : (
+              <CategoryIcon category={i.category} className="size-6" />
+            )}
             {i.name}
           </Link>
         ))}
       </div>
 
-      {!result && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Tap the items you need and your cheapest trip shows up here.</p>}
+      {!result && <p className="rounded-[1.5rem] border-2 border-dashed p-6 text-center text-sm text-muted-foreground">Tap the items you need and your cheapest trip shows up here.</p>}
 
       {result && (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="size-4" />
             {whereText ? `Measured from ${whereText}.` : "No location yet, so this is across NYC. Pick one above to count walking and fares."}
           </p>
 
-          {!result.best && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Nobody has reported these near you yet.</p>}
+          {!result.best && <p className="rounded-[1.5rem] border-2 border-dashed p-6 text-center text-sm text-muted-foreground">Nobody has reported these near you yet.</p>}
           {result.best && (
-            <Card className="gap-3 p-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="font-semibold">Best single stop</h2>
-                <span className="text-lg font-bold tabular-nums">{money(result.best.total)}</span>
+            <section className="flex flex-col gap-3 rounded-[1.75rem] bg-hero p-5 text-hero-foreground">
+              <div className="flex items-end justify-between gap-2">
+                <h2 className="font-display text-2xl">Best single stop</h2>
+                <Price value={result.best.total} className="text-4xl text-lime" />
               </div>
               <StopCard stop={result.best.stops[0]} />
-              {result.best.stops[0].fare > 0 && <p className="text-xs text-muted-foreground">Total includes the subway fare. Groceries alone: {money(result.best.groceries)}.</p>}
-              {result.best.missing.length > 0 && <p className="text-xs text-muted-foreground">Not reported here: {result.best.missing.map((m) => m.name).join(", ")}.</p>}
-            </Card>
+              {result.best.stops[0].fare > 0 && <p className="text-xs text-hero-muted">Total includes the subway fare. Groceries alone: {money(result.best.groceries)}.</p>}
+              {result.best.missing.length > 0 && <p className="text-xs text-hero-muted">Not reported here: {result.best.missing.map((m) => m.name).join(", ")}.</p>}
+            </section>
           )}
 
           {result.split && (
-            <Card className="gap-3 border-primary/40 bg-brand-soft p-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="font-semibold">Worth a second stop</h2>
-                <span className="text-lg font-bold tabular-nums">{money(result.split.total)}</span>
+            <section className="relative flex flex-col gap-3 rounded-[1.75rem] bg-brand-soft p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="font-display text-2xl">Worth a second stop</h2>
+                  <Price value={result.split.total} className="text-3xl" />
+                </div>
+                {result.split.saves > 0 && <Sticker price={result.split.saves} label="saved" size="md" slap delay={300} tilt={8} />}
               </div>
               <p className="text-sm">
                 {result.split.saves > 0 ? `Saves ${money(result.split.saves)}` : "Gets more of your list"}. The two stores are close together, so it&apos;s one trip.
@@ -130,7 +148,7 @@ export default async function ListPage({ searchParams }: PageProps<"/list">) {
               {result.split.stops.map((s, i) => (
                 <StopCard key={s.store.id} stop={s} step={i + 1} />
               ))}
-            </Card>
+            </section>
           )}
 
           {result.best && !result.split && (

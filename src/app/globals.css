@@ -3,65 +3,90 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* shadcn/ui tokens. Primary is Pricey green. */
+/* Pricey: a fresh market with live prices.
+   Aubergine ink, sprout canvas, lime for savings, tangerine for deals, tomato for price hikes.
+   shadcn/ui tokens first, then Pricey's own. */
 :root {
   /* Tells the browser which theme we are in, so native dropdowns, date pickers,
      autocomplete lists, checkboxes, and scrollbars match instead of staying light. */
   color-scheme: light;
-  --radius: 0.75rem;
-  --background: oklch(0.985 0.002 106);
-  --foreground: oklch(0.18 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0 0);
-  --primary: oklch(0.52 0.14 150);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.004 106);
-  --secondary-foreground: oklch(0.2 0 0);
-  --muted: oklch(0.96 0.004 106);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.955 0.004 106);
-  --accent-foreground: oklch(0.2 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.915 0.004 106);
-  --input: oklch(0.9 0.004 106);
-  --ring: oklch(0.52 0.14 150);
-  --brand-soft: oklch(0.95 0.05 150);
-  --warn-soft: oklch(0.96 0.06 90);
+  --radius: 1rem;
+  --background: #f4f6ef;
+  --foreground: #2a1338;
+  --card: #ffffff;
+  --card-foreground: #2a1338;
+  --popover: #ffffff;
+  --popover-foreground: #2a1338;
+  --primary: #3d1a52;
+  --primary-foreground: #ffffff;
+  --secondary: #ecefe4;
+  --secondary-foreground: #2a1338;
+  --muted: #ecefe4;
+  --muted-foreground: #655a70;
+  --accent: #eef2e4;
+  --accent-foreground: #2a1338;
+  --destructive: #c8281f;
+  --border: #e2e6da;
+  --input: #d3d8c9;
+  --ring: #7a3fd1;
+
+  /* Savings and the cheapest price: always with aubergine text on top. */
+  --lime: #c6f135;
+  --lime-foreground: #2a1338;
+  /* Deals and free food. */
+  --tangerine: #ff7b22;
+  --tangerine-foreground: #2a1338;
+  /* Readable on the canvas: price went down / up. */
+  --drop: #1b7f39;
+  --hike: #c8281f;
+  /* Hero surfaces (the search block, best trip): aubergine in light, deep plum in dark. */
+  --hero: #3d1a52;
+  --hero-foreground: #fbf7ff;
+  --hero-muted: #cdb8dc;
+  /* The search box inside the hero stays a bright white pill in both themes. */
+  --field: #ffffff;
+  --field-foreground: #2a1338;
+  --brand-soft: #eaf8c4;
+  --warn-soft: #ffe6d3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --background: oklch(0.15 0 0);
-    --foreground: oklch(0.95 0 0);
-    --card: oklch(0.2 0 0);
-    --card-foreground: oklch(0.95 0 0);
-    --popover: oklch(0.2 0 0);
-    --popover-foreground: oklch(0.95 0 0);
-    --primary: oklch(0.78 0.16 150);
-    --primary-foreground: oklch(0.18 0.03 150);
-    --secondary: oklch(0.26 0 0);
-    --secondary-foreground: oklch(0.95 0 0);
-    --muted: oklch(0.26 0 0);
-    --muted-foreground: oklch(0.7 0 0);
-    --accent: oklch(0.27 0 0);
-    --accent-foreground: oklch(0.95 0 0);
-    --destructive: oklch(0.7 0.19 22);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.78 0.16 150);
-    --brand-soft: oklch(0.3 0.06 150);
-    --warn-soft: oklch(0.32 0.06 85);
+    --background: #170c1f;
+    --foreground: #f6f0f9;
+    --card: #221430;
+    --card-foreground: #f6f0f9;
+    --popover: #221430;
+    --popover-foreground: #f6f0f9;
+    --primary: #c6f135;
+    --primary-foreground: #2a1338;
+    --secondary: #2f1f3d;
+    --secondary-foreground: #f6f0f9;
+    --muted: #2f1f3d;
+    --muted-foreground: #b8aac4;
+    --accent: #2c1d39;
+    --accent-foreground: #f6f0f9;
+    --destructive: #ff7a70;
+    --border: rgb(255 255 255 / 9%);
+    --input: rgb(255 255 255 / 15%);
+    --ring: #c6f135;
+
+    --drop: #86e39a;
+    --hike: #ff8a80;
+    --hero: #2c1740;
+    --hero-foreground: #fbf7ff;
+    --hero-muted: #bda8cf;
+    --brand-soft: #2c3a14;
+    --warn-soft: #3d2415;
   }
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-bagel);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
@@ -82,6 +107,17 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-lime: var(--lime);
+  --color-lime-foreground: var(--lime-foreground);
+  --color-tangerine: var(--tangerine);
+  --color-tangerine-foreground: var(--tangerine-foreground);
+  --color-drop: var(--drop);
+  --color-hike: var(--hike);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-muted: var(--hero-muted);
+  --color-field: var(--field);
+  --color-field-foreground: var(--field-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-warn-soft: var(--warn-soft);
 }
@@ -90,8 +126,28 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 6.5rem;
+  }
+  @media (min-width: 40rem) {
+    html {
+      scroll-padding-bottom: 1rem;
+    }
+  }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  summary,
+  label {
+    touch-action: manipulation;
+  }
+  h1 {
+    @apply font-display font-normal;
+    text-wrap: balance;
   }
   /* Belt and braces for native select popups on every browser. */
   option,
@@ -101,6 +157,183 @@
   }
   summary::-webkit-details-marker {
     display: none;
+  }
+}
+
+/* ---------- Motion ---------- */
+
+/* Page changes: the old page steps back, the new one rises in (app/template.tsx). */
+::view-transition-old(.page-exit) {
+  animation: 140ms ease-out both pricey-fade-out;
+}
+::view-transition-new(.page-enter) {
+  animation: 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both pricey-rise;
+}
+/* The header and tab bar stay put and stay on top while the page underneath changes.
+   The new snapshot is live, so the tab indicator's own slide still shows. */
+::view-transition-group(site-header),
+::view-transition-group(tab-bar) {
+  z-index: 10;
+}
+::view-transition-old(site-header),
+::view-transition-old(tab-bar) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+@keyframes pricey-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes pricey-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Live price ticker: two copies of the list slide by, so the loop is seamless. */
+@keyframes pricey-ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ticker-track {
+  animation: pricey-ticker var(--ticker-duration, 40s) linear infinite;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track,
+.ticker[data-paused] .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Comparison bars grow from the left, one after another. */
+@keyframes pricey-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.bar-grow {
+  transform-origin: left;
+  animation: pricey-grow 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 150ms);
+}
+
+/* A produce sticker slapped on: after the bars land, or when your report counts. */
+@keyframes pricey-slap {
+  0% {
+    transform: scale(1.6) rotate(var(--tilt, -8deg));
+    opacity: 0;
+  }
+  60% {
+    transform: scale(0.94) rotate(var(--tilt, -8deg));
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(var(--tilt, -8deg));
+  }
+}
+.sticker {
+  transform: rotate(var(--tilt, -8deg));
+}
+.sticker-slap {
+  animation: pricey-slap 480ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* The trend line draws itself in, left to right. */
+@keyframes pricey-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+.trend-draw {
+  animation: pricey-draw 1.1s cubic-bezier(0.4, 0, 0.2, 1) 200ms both;
+}
+
+/* The trust ring fills up to your score. */
+@keyframes pricey-ring-fill {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+.ring-fill {
+  animation: pricey-ring-fill 1.1s cubic-bezier(0.4, 0, 0.2, 1) 200ms both;
+}
+
+/* Tracking a price: the bell rings once. */
+@keyframes pricey-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20%,
+  60% {
+    transform: rotate(14deg);
+  }
+  40%,
+  80% {
+    transform: rotate(-14deg);
+  }
+}
+
+/* Reading a receipt: a lime line sweeps down the photo. */
+@keyframes pricey-scan {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(16rem);
+  }
+}
+.scan-line {
+  animation: pricey-scan 2.4s ease-in-out infinite;
+}
+
+/* "Checking prices": three bouncing dots. */
+@keyframes pricey-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: pricey-bounce 1s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .ticker-track,
+  .bar-grow,
+  .sticker-slap,
+  .typing-dot,
+  .trend-draw,
+  .ring-fill,
+  .scan-line {
+    animation: none;
+  }
+  /* Without the slide, the ticker becomes a list you can swipe. */
+  .ticker {
+    overflow-x: auto;
   }
 }
 
@@ -129,9 +362,9 @@
   height: 36px;
   border-radius: 9999px;
   border: 3px solid var(--card);
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font: 700 13px/1 var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--hero);
+  color: var(--hero-foreground);
+  font: 400 13px/1 var(--font-bagel), system-ui, sans-serif;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
 .pricey-pin-label {
@@ -140,7 +373,7 @@
   align-items: center;
   max-width: 140px;
   text-align: center;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-figtree), system-ui, sans-serif;
   text-shadow: 0 0 3px var(--background), 0 0 6px var(--background);
   color: var(--foreground);
 }
@@ -152,8 +385,8 @@
 .pricey-pin-label i {
   font-style: normal;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--primary);
+  font-weight: 700;
+  color: var(--drop);
   line-height: 1.2;
 }
 .pricey-you {

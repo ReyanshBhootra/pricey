@@ -1,15 +1,13 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { BadgePercent } from "lucide-react";
 import { startTransition, useActionState, useState } from "react";
+import { selectClass } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitDealAction, type DealState } from "@/lib/actions";
 import { BOROUGHS, type Store } from "@/lib/types";
-
-const selectClass =
-  "h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
 
 // Free food, pop-ups, and discounts: same reports pipeline as prices, type "event".
 export function DealForm({ stores, storeId }: { stores: Store[]; storeId: string }) {
@@ -31,13 +29,13 @@ export function DealForm({ stores, storeId }: { stores: Store[]; storeId: string
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="space-y-4 rounded-xl border bg-card p-4 shadow-xs"
+      className="flex flex-col gap-5 rounded-[1.5rem] border bg-card p-4"
     >
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="what">What is it?</Label>
-        <Input id="what" name="what" required maxLength={200} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Free bagels until 5pm, $1 coffee pop-up..." />
+        <Input id="what" name="what" required maxLength={200} value={what} onChange={(e) => setWhat(e.target.value)} placeholder="Free bagels until 5pm, $1 coffee pop-up…" />
       </div>
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="dealStore">Where?</Label>
         <select id="dealStore" name="storeId" required defaultValue={storeId} className={selectClass}>
           <option value="">Pick a spot</option>
@@ -50,20 +48,20 @@ export function DealForm({ stores, storeId }: { stores: Store[]; storeId: string
           ))}
         </select>
       </div>
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="dealPrice">Price (leave empty if free)</Label>
         <div className="relative">
-          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-          <Input id="dealPrice" name="price" inputMode="decimal" type="number" step="0.01" min="0" max="1000" placeholder="Free" value={price} onChange={(e) => setPrice(e.target.value)} className="pl-7" />
+          {price && <span className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 font-display text-xl text-tangerine-foreground">$</span>}
+          <Input id="dealPrice" name="price" inputMode="decimal" type="number" step="0.01" min="0" max="1000" placeholder="Free" value={price} onChange={(e) => setPrice(e.target.value)} className="h-14 rounded-2xl border-transparent bg-tangerine pl-10 font-display text-3xl text-tangerine-foreground tabular-nums placeholder:text-tangerine-foreground/45 focus-visible:ring-ring md:text-3xl dark:bg-tangerine" />
         </div>
       </div>
-      <Button disabled={pending} size="lg" className="w-full">
-        {pending ? "Posting..." : "Post it"}
+      <Button disabled={pending} size="lg" variant="tangerine" className="w-full">
+        {pending ? "Posting…" : "Post it"}
       </Button>
       {state && !state.ok && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.ok && (
-        <p className="flex gap-2 rounded-lg bg-brand-soft p-3 text-sm">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+        <p role="status" className="flex items-center gap-3 rounded-2xl bg-warn-soft p-3 text-sm animate-in fade-in zoom-in-95">
+          <BadgePercent className="size-6 shrink-0" />
           <span>Posted! It shows up in the deals banner for people nearby, and in texted alerts.</span>
         </p>
       )}

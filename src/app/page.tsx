@@ -1,15 +1,17 @@
-import { ChevronRight, ListChecks, Sparkles } from "lucide-react";
+import { BadgePercent, ChevronDown, ChevronRight, ListChecks, Store } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { CategoryIcon } from "@/components/category";
 import { chipClass } from "@/components/chip";
 import { ItemSearch } from "@/components/item-search";
 import { LiveRefresh } from "@/components/live-refresh";
 import { LocationPicker } from "@/components/location-picker";
 import { PriceMap } from "@/components/price-map";
 import { getMapStores } from "@/lib/map-data";
+import { Price } from "@/components/price";
 import { ShowMore } from "@/components/show-more";
+import { Ticker, type Tick } from "@/components/ticker";
 import { TrackedAlerts } from "@/components/tracked-alerts";
-import { Card } from "@/components/ui/card";
 import {
   getActiveEvents,
   getItems,
@@ -18,7 +20,8 @@ import {
   getPricesForStores,
   getStores,
 } from "@/lib/data";
-import { miles, money, timeAgo } from "@/lib/format";
+import { miles, timeAgo } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { DEFAULT_WHERE, getWhere, isExact, nearText } from "@/lib/where";
 import { CATEGORIES, type Category, type TrustedPrice } from "@/lib/types";
 
@@ -83,17 +86,39 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
     return `/?${q}`;
   };
 
+  const itemCategory = new Map(items.map((i) => [i.id, i.category]));
+  // Ticker: what just moved across the city, then the cheapest spot for each item nearby.
+  const cheapestNearby = new Map<string, TrustedPrice>();
+  for (const list of prices.values())
+    for (const p of list) {
+      const best = cheapestNearby.get(p.itemId);
+      if (!p.estimated && (!best || p.price < best.price)) cheapestNearby.set(p.itemId, p);
+    }
+  const ticks: Tick[] = [
+    ...changes.slice(0, 6).map((c) => ({
+      key: c.id,
+      href: `/item/${c.itemId}`,
+      name: itemName.get(c.itemId) ?? c.itemId,
+      price: c.newPrice,
+      was: c.oldPrice,
+      where: storeName.get(c.storeId) ?? c.storeId,
+    })),
+    ...[...cheapestNearby.values()].slice(0, 10).map((p) => ({
+      key: `low-${p.itemId}`,
+      href: `/item/${p.itemId}`,
+      name: itemName.get(p.itemId) ?? p.itemId,
+      price: p.price,
+      where: storeName.get(p.storeId) ?? p.storeId,
+    })),
+  ];
+
   const row = (p: TrustedPrice) => (
     <li key={p.itemId}>
-      <Link
-        href={`/item/${p.itemId}`}
-        className="flex justify-between gap-3 py-2 hover:text-primary"
-      >
-        <span className="truncate">{itemName.get(p.itemId) ?? p.itemId}</span>
-        <span className="shrink-0 tabular-nums">
-          <strong>{money(p.price)}</strong>
-          <span className="ml-1 text-xs text-muted-foreground">{p.estimated ? "est." : `×${p.votes}`}</span>
-        </span>
+      <Link href={`/item/${p.itemId}`} className="group flex items-center gap-3 py-2">
+        <CategoryIcon category={itemCategory.get(p.itemId) ?? ""} className="size-7" />
+        <span className="min-w-0 flex-1 truncate group-hover:underline">{itemName.get(p.itemId) ?? p.itemId}</span>
+        <span className="w-12 shrink-0 text-right text-xs text-muted-foreground">{p.estimated ? "estimate" : p.votes === 1 ? "1 report" : `${p.votes} agree`}</span>
+        <Price value={p.price} className="w-16 shrink-0 text-right text-lg" />
       </Link>
     </li>
   );
@@ -101,49 +126,29 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
   return (
     <>
       <LiveRefresh name="reports" />
-      <div className="mb-1 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Real prices {nearText(where)}
-        </h1>
-        <div
-          className="flex shrink-0 rounded-full border bg-card p-0.5 text-sm"
-          role="tablist"
-          aria-label="View"
-        >
-          {(["list", "map"] as const).map((v) => (
-            <Link
-              key={v}
-              href={viewHref(v)}
-              scroll={false}
-              replace
-              role="tab"
-              aria-selected={view === v}
-              className={`rounded-full px-3 py-1 capitalize ${view === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              {v}
-            </Link>
-          ))}
+      <section className="mb-5 overflow-hidden rounded-[1.75rem] bg-hero text-hero-foreground">
+        <div className="px-5 pt-6 pb-5">
+          <h1 className="mb-2 text-[2.6rem] leading-[0.95]">Real prices {nearText(where)}</h1>
+          <p className="mb-5 text-hero-muted">Reported by New Yorkers. The price most people agree on wins.</p>
+          <ItemSearch items={items} />
         </div>
-      </div>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Reported by New Yorkers. The price most people agree on wins.
-      </p>
+        {ticks.length > 0 && (
+          <div className="flex items-center gap-3 border-t border-white/10 py-2 pl-5">
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold text-lime">
+              <span className="relative flex size-2">
+                <span className="absolute inset-0 animate-ping rounded-full bg-lime opacity-75 motion-reduce:animate-none" />
+                <span className="relative size-2 rounded-full bg-lime" />
+              </span>
+              Live
+            </span>
+            <Ticker ticks={ticks} />
+          </div>
+        )}
+      </section>
 
-      <ItemSearch items={items} />
       <Suspense>
         <LocationPicker where={saved && { label: saved.label, kind: saved.kind }} />
       </Suspense>
-      <Link
-        href="/list"
-        className="mb-4 flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm shadow-xs hover:bg-accent"
-      >
-        <ListChecks className="size-4 text-primary" />
-        <span>
-          <span className="font-medium">Plan a shopping list</span>
-          <span className="text-muted-foreground"> · cheapest trip, fares counted</span>
-        </span>
-        <ChevronRight className="ml-auto size-4 text-muted-foreground" />
-      </Link>
 
       <TrackedAlerts
         changes={changes.map((c) => ({
@@ -154,31 +159,67 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
       />
 
       {events.length > 0 && (
-        <details className="group mb-5 rounded-xl border bg-brand-soft p-4">
-          <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold">
-            <Sparkles className="size-4 text-primary" />
-            {eventSpots} {eventSpots === 1 ? "spot" : "spots"} {nearText(where)}{" "}
-            {eventSpots === 1 ? "has" : "have"} deals right now
-            <ChevronRight className="ml-auto size-4 transition-transform group-open:rotate-90" />
+        <details className="group mb-5 overflow-hidden rounded-[1.5rem] bg-tangerine text-tangerine-foreground">
+          <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/60">
+            <BadgePercent className="size-7 shrink-0" strokeWidth={2} />
+            <span className="font-display text-xl leading-tight">
+              {eventSpots} {eventSpots === 1 ? "spot" : "spots"} {nearText(where)} {eventSpots === 1 ? "has" : "have"} deals right now
+            </span>
+            <ChevronDown className="ml-auto size-5 shrink-0 transition-transform duration-300 group-open:rotate-180" />
           </summary>
-          <ul className="mt-3 space-y-2 text-sm">
+          <ul className="mx-1.5 mb-1.5 divide-y rounded-[1.1rem] bg-card text-sm text-card-foreground group-open:animate-in group-open:fade-in group-open:slide-in-from-top-2">
             {events.map((e) => (
-              <li key={e.id}>
-                <Link
-                  href={`/store/${e.storeId}`}
-                  className="font-medium hover:underline"
-                >
-                  {storeName.get(e.storeId) ?? e.storeId}
-                </Link>
-                : {e.note ?? `${itemName.get(e.itemId)} for ${money(e.price)}`}{" "}
-                <span className="text-muted-foreground">
-                  {timeAgo(e.timestamp)}
-                </span>
+              <li key={e.id} className="flex items-center gap-3 px-3.5 py-3">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/store/${e.storeId}`} className="font-semibold hover:underline">
+                    {storeName.get(e.storeId) ?? e.storeId}
+                  </Link>
+                  <p>
+                    {e.note ?? itemName.get(e.itemId)} <span className="text-muted-foreground">{timeAgo(e.timestamp)}</span>
+                  </p>
+                </div>
+                <Price value={e.price} className="shrink-0 text-lg" />
               </li>
             ))}
           </ul>
         </details>
       )}
+
+      <Link
+        href="/list"
+        className="group mb-6 flex items-center gap-3 rounded-[1.25rem] border bg-card p-3 pr-4 transition-colors hover:border-foreground/30"
+      >
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-lime text-lime-foreground">
+          <ListChecks className="size-5" />
+        </span>
+        <span className="min-w-0">
+          <span className="block font-semibold">Plan a shopping list</span>
+          <span className="block text-sm text-muted-foreground">The cheapest trip, with subway fares counted</span>
+        </span>
+        <ChevronRight className="ml-auto size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="font-display text-2xl">Stores {nearText(where)}</h2>
+        <div className="flex shrink-0 rounded-full border bg-card p-1 text-sm font-semibold" role="tablist" aria-label="View">
+          {(["list", "map"] as const).map((v) => (
+            <Link
+              key={v}
+              href={viewHref(v)}
+              scroll={false}
+              replace
+              role="tab"
+              aria-selected={view === v}
+              className={cn(
+                "rounded-full px-3.5 py-1 capitalize transition-colors",
+                view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {v}
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {view === "map" ? (
         <PriceMap
@@ -193,55 +234,41 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
               All
             </Link>
             {CATEGORIES.map((c) => (
-              <Link
-                key={c}
-                href={catHref(c)}
-                className={chipClass(cat === c)}
-                scroll={false}
-                replace
-              >
+              <Link key={c} href={catHref(c)} className={cn(chipClass(cat === c), "pl-1.5 capitalize")} scroll={false} replace>
+                <CategoryIcon category={c} className="size-6" />
                 {c}
               </Link>
             ))}
           </div>
 
-          <ul className="space-y-3">
+          <ul className="flex flex-col gap-4">
             {nearby.map((s) => {
               const list = [...(prices.get(s.id) ?? [])].sort((a, b) =>
-                (itemName.get(a.itemId) ?? "").localeCompare(
-                  itemName.get(b.itemId) ?? "",
-                ),
+                (itemName.get(a.itemId) ?? "").localeCompare(itemName.get(b.itemId) ?? ""),
               );
               return (
-                <li key={s.id}>
-                  <Card className="gap-0 px-4 py-3">
-                    <div className="mb-1 flex items-baseline justify-between gap-3">
-                      <Link
-                        href={`/store/${s.id}`}
-                        className="truncate font-semibold hover:underline"
-                      >
+                <li key={s.id} className="rounded-[1.5rem] border bg-card px-4 pt-4 pb-2">
+                  <div className="mb-1 flex items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-hero text-hero-foreground">
+                      <Store className="size-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/store/${s.id}`} className="block truncate text-lg leading-tight font-bold hover:underline">
                         {s.name}
                       </Link>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {isExact(where) ? `${miles(s.distanceKm)} · ${s.borough}` : s.borough}
-                      </span>
+                      <p className="text-sm text-muted-foreground">{isExact(where) ? `${miles(s.distanceKm)} away in ${s.borough}` : s.borough}</p>
                     </div>
-                    {list.length === 0 ? (
-                      <p className="py-2 text-sm text-muted-foreground">
-                        No {cat ?? ""} prices yet.{" "}
-                        <Link
-                          href={`/report?store=${s.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          Add one
-                        </Link>
-                      </p>
-                    ) : (
-                      <ShowMore className="divide-y text-sm">
-                        {list.map(row)}
-                      </ShowMore>
-                    )}
-                  </Card>
+                  </div>
+                  {list.length === 0 ? (
+                    <p className="py-3 text-sm text-muted-foreground">
+                      No {cat ?? ""} prices yet.{" "}
+                      <Link href={`/report?store=${s.id}`} className="font-semibold text-foreground underline underline-offset-2">
+                        Add one
+                      </Link>
+                    </p>
+                  ) : (
+                    <ShowMore className="divide-y">{list.map(row)}</ShowMore>
+                  )}
                 </li>
               );
             })}

@@ -16,7 +16,7 @@ export function StillPrice({ itemId, storeId, price, estimated }: { itemId: stri
 
   if (state === "done") {
     return (
-      <span className="flex items-center justify-end gap-1 text-xs text-green-700 dark:text-green-400">
+      <span className="flex items-center justify-end gap-1 text-xs font-semibold text-drop">
         <Check className="size-3" /> Thanks, confirmed
       </span>
     );
@@ -27,7 +27,7 @@ export function StillPrice({ itemId, storeId, price, estimated }: { itemId: stri
       <button
         type="button"
         disabled={pending}
-        className="font-medium text-primary hover:underline disabled:opacity-50"
+        className="font-semibold text-foreground underline underline-offset-2 hover:no-underline disabled:opacity-50"
         onClick={() =>
           start(async () => {
             const r = await confirmPriceAction(itemId, storeId, price);
@@ -37,7 +37,7 @@ export function StillPrice({ itemId, storeId, price, estimated }: { itemId: stri
       >
         {pending ? "Saving" : "Yes"}
       </button>
-      <Link href={`/report?item=${itemId}&store=${storeId}`} className="font-medium text-primary hover:underline">
+      <Link href={`/report?item=${itemId}&store=${storeId}`} className="font-semibold text-foreground underline underline-offset-2 hover:no-underline">
         Changed
       </Link>
       {state !== "ask" &&

@@ -3,6 +3,7 @@
 // app. The data layer merges it in on every read, so it works the same with or without Firebase
 // and goes live with a normal deploy. Crowd reports then vote on top of it like any other price.
 import { inNyc } from "./format";
+import { distanceKm } from "./vouch";
 import IMPORTED from "./real-prices.json";
 import { SEED_ITEMS, SEED_REPORTS, SEED_STORES } from "./seed";
 import { BOROUGHS, type Borough, type Report, type Store } from "./types";
@@ -122,7 +123,7 @@ export function checkImportJson(text: string, opts: ImportOptions = {}): ImportC
     const f: Record<string, string> = {
       store_id: pick(o, "store_id"),
       name: pick(o, "name"),
-      address: [pick(o, "address"), pick(o, "postal_code")].filter(Boolean).join(", "),
+      address: pick(o, "address").includes(pick(o, "postal_code")) ? pick(o, "address") : [pick(o, "address"), pick(o, "postal_code")].filter(Boolean).join(", "),
       borough: pick(o, "borough", "borough_as_reported"),
       lat: pick(o, "lat", "latitude"),
       lng: pick(o, "lng", "lon", "longitude"),
@@ -130,18 +131,24 @@ export function checkImportJson(text: string, opts: ImportOptions = {}): ImportC
     };
     return { at: `stores[${i}]${f.store_id ? ` (${f.store_id})` : ""}`, get: (k) => f[k] ?? "" };
   });
-  const prices = list(doc.observations ?? doc.prices, "observations").map((o, i): Row => {
+  // Online store listings count too: an online price is still the store's own price, and
+  // shoppers correct it by voting if the shelf says otherwise.
+  const d = doc as Record<string, unknown>;
+  const observed = [...list(doc.observations ?? doc.prices ?? [], "observations"), ...(Array.isArray(d.online_price_candidates) ? (d.online_price_candidates as Record<string, unknown>[]) : [])];
+  const firstCandidate = observed.length - (Array.isArray(d.online_price_candidates) ? d.online_price_candidates.length : 0);
+  const prices = observed.map((o, i): Row => {
     const f: Record<string, string> = {
       store_id: pick(o, "store_id"),
       item_id: pick(o, "item_id"),
-      price: pick(o, "regular_price_usd", "price"),
-      sale_price: pick(o, "promo_price_usd", "sale_price", "normalized_price_per_package_usd", "price_usd"),
+      price: pick(o, "regular_price_usd", "normalized_online_regular_price_usd", "online_regular_package_price_usd", "price"),
+      sale_price: pick(o, "promo_price_usd", "normalized_online_promo_price_usd", "online_promo_package_price_usd", "sale_price", "normalized_price_per_package_usd", "price_usd"),
       conditions: pick(o, "promo_conditions", "conditions", "source_offer_details"),
       listed_as: pick(o, "package_description", "listed_as"),
       source_url: pick(o, "source_url"),
       scraped_at: pick(o, "observed_date", "scraped_at"),
     };
-    return { at: `observations[${i}] (${f.store_id} + ${f.item_id})`, get: (k) => f[k] ?? "" };
+    const at = i < firstCandidate ? `observations[${i}]` : `online_price_candidates[${i - firstCandidate}]`;
+    return { at: `${at} (${f.store_id} + ${f.item_id})`, get: (k) => f[k] ?? "" };
   });
   return checkRows(stores, prices, opts, errors);
 }
@@ -158,6 +165,7 @@ function checkRows(storeRows: Row[], priceRows: Row[], opts: ImportOptions, erro
 
   // Stores
   const stores: Store[] = [];
+  const sameAs = new Map<string, string>(); // imported store id -> demo store id it replaced
   const brokenStores = new Set<string>(); // already reported; their price rows aren't repeated
   for (const { at, get } of storeRows) {
     const id = normId(get("store_id"));
@@ -178,7 +186,15 @@ function checkRows(storeRows: Row[], priceRows: Row[], opts: ImportOptions, erro
       continue;
     }
     const address = get("address") || undefined;
-    stores.push({ id, name, borough: borough!, lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5, ...(address && { address }), ...(url(get("source_url"), at) && { sourceUrl: get("source_url") }) });
+    // The same place as a demo store (same chain, a few blocks at most): take over its id, so
+    // there's one pin with the real address instead of two.
+    const chain = (n: string) => n.split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+    const twin = SEED_STORES.find((d) => chain(d.name) === chain(name) && distanceKm(d.lat, d.lng, lat, lng) < 0.5 && !stores.some((s) => s.id === d.id));
+    if (twin) {
+      sameAs.set(id, twin.id);
+      warnings.push(`${at}: same store as the demo "${twin.name}", merged into one`);
+    }
+    stores.push({ id: twin?.id ?? id, name, borough: borough!, lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5, ...(address && { address }), ...(url(get("source_url"), at) && { sourceUrl: get("source_url") }) });
   }
 
   // Prices
@@ -188,7 +204,8 @@ function checkRows(storeRows: Row[], priceRows: Row[], opts: ImportOptions, erro
   const reports: Report[] = [];
   let old = 0;
   for (const { at, get } of priceRows) {
-    const storeId = normId(get("store_id"));
+    const rawStoreId = normId(get("store_id"));
+    const storeId = sameAs.get(rawStoreId) ?? rawStoreId;
     const itemId = normId(get("item_id"));
     const hasRegular = !!get("price");
     const price = Number(get("price").replace(/^\$/, ""));
@@ -214,7 +231,13 @@ function checkRows(storeRows: Row[], priceRows: Row[], opts: ImportOptions, erro
     if (hasRegular && sale !== null && sale >= price) warnings.push(`${at}: sale_price ${sale} isn't lower than price ${price}, using ${price}`);
     // A deal you can only get by buying several ("must buy 10") isn't the price of one, so the
     // regular price stays and the deal goes in the note. Other sales are the price you pay.
-    const conditions = get("conditions").replace(/\s+/g, " ").slice(0, 90);
+    // Big purchase caps ("maximum 100 lb") aren't worth telling anyone about.
+    const conditions = get("conditions")
+      .replace(/\s+/g, " ")
+      .split(/;\s*/)
+      .filter((c) => c && !/^(maximum|max|limit)\s+\d{2,}/i.test(c))
+      .join("; ")
+      .slice(0, 90);
     const multiBuy = /must buy|minimum/i.test(conditions);
     const onSale = sale !== null && (!hasRegular || (sale < price && !multiBuy));
     const paid = onSale ? sale! : price;

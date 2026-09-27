@@ -81,7 +81,6 @@ Everyone imports from here. Do not talk to Firestore directly.
 
 - **Text Pricey** (`src/lib/texting.ts`, now mostly handled by the agent below; these rules are the backup): `eggs 3.99 at key food park slope` reports a price (vouching applies, one vote per phone), `free bagels at myrtle deli until 5pm` posts a deal, `deals in brooklyn` returns "N spots have discounts right now", `alerts on brooklyn` / `stop` manage alerts, anything else is answered by Gemini with the same grounding and fallback as the chat. Phone numbers are never stored, only a one-way hash.
 - **Free food / deals in the app:** Report page, "Free food or deal" tab. Same pipeline (a report with `type: "event"`). Shows in the Nearby deals banner and in texted alerts. Duplicates show once.
-- **Try it without a phone:** `/text` is an iMessage-style simulator using the same handler.
 - **Real iMessage via Photon:** `bot/` is a tiny Spectrum relay that forwards texts to `/api/text` (locked with `TEXT_BOT_SECRET`) and every few minutes sends subscribers one bundled alert from `/api/text/digest`. Beginner setup in `bot/README.md` (`cd bot && npm run setup && npm start`). Needs your phone, and any tester phones, added in the Photon dashboard.
 - Tests: `npm run test:texting` (parsing and replies), `cd bot && bun test` (the relay, with Photon faked, against a running app).
 

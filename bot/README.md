@@ -88,7 +88,6 @@ Old-style commands still work too:
 - **Reply says "Pricey is having a moment"**: the website refused the relay. `TEXT_BOT_SECRET` in Vercel must match `bot/.env`, and you must redeploy after adding it.
 - **No tapbacks, contact card, photos, or alerts**: you're running the old relay. See Updating the relay above.
 - **No reply at all**: is `npm start` still running? Is the phone you're texting from added as a user in Photon?
-- **No phone handy / Photon down on demo day**: open `pricey-nine.vercel.app/text`. Same brain, in the browser.
 
 ## For developers
 

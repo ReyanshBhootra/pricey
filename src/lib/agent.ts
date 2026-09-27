@@ -1,4 +1,4 @@
-// Pricey's brain for conversations (iMessage, the /text simulator). Gemini reads the message,
+// Pricey's brain for conversations (iMessage). Gemini reads the message,
 // calls tools to read or change real data, then writes the reply in Pricey's voice and the
 // person's language. If Gemini is unavailable the caller falls back to the rule-based replies.
 

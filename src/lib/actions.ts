@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { addItem, addStore, createForumPost, getItem, getStore, saveUser, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
-import { dealsDigest, findBorough, handleText, postDeal } from "./texting";
+import { findBorough, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
 
 // Reports and posts belong to the logged-in account, or to this browser until they log in.
@@ -112,19 +112,6 @@ export async function syncListsAction(lists: { tracked?: string[]; favorites?: s
   if (!id) return;
   const clean = (v?: string[]) => (Array.isArray(v) ? [...new Set(v.filter((x) => typeof x === "string"))].slice(0, 100) : undefined);
   await saveUser(id, { tracked: clean(lists.tracked), favorites: clean(lists.favorites) });
-}
-
-// The /text simulator: same handler and brain as the real iMessage line.
-export async function simulateTextAction(text: string): Promise<{ reply: string; react: string | null; contactCard: boolean; alert: string | null }> {
-  const clean = String(text ?? "").slice(0, 500);
-  if (!clean.trim()) return { reply: "Say something! Ask me what anything costs.", react: null, contactCard: false, alert: null };
-  // Logged in: the simulator is your real account (same profile as your iMessage).
-  const account = await sessionUserId();
-  const r = await handleText(account ?? `sim-${await userId()}`, clean, { channel: "web", userId: account ?? undefined });
-  revalidatePath("/", "layout");
-  // On the real line, alerts arrive later as one bundled text. Here we show one right away.
-  const alert = r.action && "subscribe" in r.action ? await dealsDigest(r.action.subscribe === "all" ? null : r.action.subscribe) : null;
-  return { reply: r.reply, react: r.react ?? null, contactCard: Boolean(r.contactCard), alert };
 }
 
 export type DealState = { ok: true; note: string } | { ok: false; error: string } | null;

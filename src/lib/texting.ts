@@ -232,7 +232,7 @@ const welcome = (u: UserProfile) =>
 
 const addTurn = (recent: ChatTurn[] | undefined, ...turns: ChatTurn[]) => [...(recent ?? []), ...turns].slice(-8);
 
-// Every text, from iMessage or the /text simulator, comes through here.
+// Every text from iMessage comes through here.
 export async function handleText(from: string, raw: string, incoming: Incoming = {}): Promise<TextReply> {
   const channel = incoming.channel ?? "imessage";
   const id = incoming.userId ?? phoneUserId(from);

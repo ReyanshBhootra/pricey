@@ -36,7 +36,7 @@ export default async function ProfilePage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-[2.6rem] leading-[0.95]">{user?.firstName ? `Hey, ${user.firstName}` : "Your profile"}</h1>
+          <h1 className="text-[2.6rem] leading-[0.95] lg:text-[3.5rem]">{user?.firstName ? `Hey, ${user.firstName}` : "Your profile"}</h1>
           <p className="mt-1 text-sm text-muted-foreground">Phone ending in {user?.phoneLast4 ?? "····"}</p>
         </div>
         <LogoutButton />
@@ -50,86 +50,89 @@ export default async function ProfilePage() {
             [reports.filter((r) => r.type === "event").length, "deals shared", "bg-tangerine text-tangerine-foreground"],
           ] as const
         ).map(([n, label, tone]) => (
-          <div key={label} className={`rounded-[1.5rem] p-3 text-center ${tone}`}>
-            <p className="font-display text-4xl tabular-nums">{n}</p>
-            <p className="text-xs font-semibold">{label}</p>
+          <div key={label} className={`rounded-[1.5rem] p-3 text-center lg:p-7 ${tone}`}>
+            <p className="font-display text-4xl tabular-nums lg:text-6xl">{n}</p>
+            <p className="text-xs font-semibold lg:text-sm">{label}</p>
           </div>
         ))}
       </div>
 
-      <Card className="flex-row items-center gap-4 p-4">
-        {trust && trust.checked >= 3 && <TrustRing pct={Math.round((trust.agreed / trust.checked) * 100)} />}
-        <div className="flex min-w-0 flex-col gap-1">
-        <p className="flex items-center gap-2 font-semibold">
-          <BadgeCheck className="size-5 text-drop" /> Trust score
-        </p>
-        {trust && trust.checked >= 3 ? (
-          <p className="text-sm text-muted-foreground">
-            {Math.round((trust.agreed / trust.checked) * 100)}% of your prices match what other shoppers see ({trust.checked} checked), so your reports count{" "}
-            <strong className="text-foreground">{trust.weight.toFixed(1)}×</strong> when Pricey picks the trusted price.
+      {/* Laptop and up: the cards sit in two columns. */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
+        <Card className="flex-row items-center gap-4 p-4">
+          {trust && trust.checked >= 3 && <TrustRing pct={Math.round((trust.agreed / trust.checked) * 100)} />}
+          <div className="flex min-w-0 flex-col gap-1">
+          <p className="flex items-center gap-2 font-semibold">
+            <BadgeCheck className="size-5 text-drop" /> Trust score
           </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">Builds as others confirm your prices. After 3 matches, accurate reporters&apos; votes count more (up to 1.5×).</p>
-        )}
-        </div>
-      </Card>
+          {trust && trust.checked >= 3 ? (
+            <p className="text-sm text-muted-foreground">
+              {Math.round((trust.agreed / trust.checked) * 100)}% of your prices match what other shoppers see ({trust.checked} checked), so your reports count{" "}
+              <strong className="text-foreground">{trust.weight.toFixed(1)}×</strong> when Pricey picks the trusted price.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">Builds as others confirm your prices. After 3 matches, accurate reporters&apos; votes count more (up to 1.5×).</p>
+          )}
+          </div>
+        </Card>
 
-      <Card className="gap-3 p-4">
-        <p className="font-semibold">Your details</p>
-        <ProfileForm initial={{ firstName: user?.firstName, lastName: user?.lastName, email: user?.email, zip: /^\d{5}$/.test(user?.home?.label ?? "") ? user?.home?.label : "" }} />
-      </Card>
+        <Card className="gap-3 p-4">
+          <p className="font-semibold">Your details</p>
+          <ProfileForm initial={{ firstName: user?.firstName, lastName: user?.lastName, email: user?.email, zip: /^\d{5}$/.test(user?.home?.label ?? "") ? user?.home?.label : "" }} />
+        </Card>
 
-      <Card className="gap-2 p-4">
-        <p className="flex items-center gap-2 font-semibold">
-          <Tag className="size-4 text-drop" /> Tracking
-        </p>
-        {user?.tracked?.length ? (
-          <ul className="divide-y text-sm">
-            {user.tracked.map((itemId) => {
-              const best = pricesFor(itemId)[0];
-              return (
-                <li key={itemId}>
-                  <Link href={`/item/${itemId}`} className="flex justify-between py-2 hover:text-primary">
-                    <span>{itemById.get(itemId)?.name ?? itemId}</span>
-                    {best && <span className="text-muted-foreground">from {money(best.price)}</span>}
+        <Card className="gap-2 p-4">
+          <p className="flex items-center gap-2 font-semibold">
+            <Tag className="size-4 text-drop" /> Tracking
+          </p>
+          {user?.tracked?.length ? (
+            <ul className="divide-y text-sm">
+              {user.tracked.map((itemId) => {
+                const best = pricesFor(itemId)[0];
+                return (
+                  <li key={itemId}>
+                    <Link href={`/item/${itemId}`} className="flex justify-between py-2 hover:text-primary">
+                      <span>{itemById.get(itemId)?.name ?? itemId}</span>
+                      {best && <span className="text-muted-foreground">from {money(best.price)}</span>}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Nothing yet. Tap Track price on any item, or text Pricey &quot;track eggs&quot;.</p>
+          )}
+        </Card>
+
+        <Card className="gap-2 p-4">
+          <p className="flex items-center gap-2 font-semibold">
+            <Heart className="size-4 text-hike" /> Favorite stores
+          </p>
+          {user?.favorites?.length ? (
+            <ul className="divide-y text-sm">
+              {user.favorites.map((sid) => (
+                <li key={sid}>
+                  <Link href={`/store/${sid}`} className="block py-2 hover:text-primary">
+                    {storeById.get(sid)?.name ?? sid}
                   </Link>
                 </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">Nothing yet. Tap Track price on any item, or text Pricey &quot;track eggs&quot;.</p>
-        )}
-      </Card>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Star stores on the map to keep them here.</p>
+          )}
+        </Card>
 
-      <Card className="gap-2 p-4">
-        <p className="flex items-center gap-2 font-semibold">
-          <Heart className="size-4 text-hike" /> Favorite stores
-        </p>
-        {user?.favorites?.length ? (
-          <ul className="divide-y text-sm">
-            {user.favorites.map((sid) => (
-              <li key={sid}>
-                <Link href={`/store/${sid}`} className="block py-2 hover:text-primary">
-                  {storeById.get(sid)?.name ?? sid}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">Star stores on the map to keep them here.</p>
-        )}
-      </Card>
-
-      <Card className="gap-1 p-4">
-        <p className="flex items-center gap-2 font-semibold">
-          <MessageCircle className="size-4" /> Texting Pricey
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Text Pricey from the phone ending in {user?.phoneLast4 ?? "····"} and it&apos;s the same account: your home, tracked items, and reports are shared.
-          {user?.alerts ? ` Deal alerts are on for ${user.alerts.area === "all" ? "all of NYC" : user.alerts.area}.` : " Text \"alerts on\" to get bundled deal alerts."}
-        </p>
-      </Card>
+        <Card className="gap-1 p-4">
+          <p className="flex items-center gap-2 font-semibold">
+            <MessageCircle className="size-4" /> Texting Pricey
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Text Pricey from the phone ending in {user?.phoneLast4 ?? "····"} and it&apos;s the same account: your home, tracked items, and reports are shared.
+            {user?.alerts ? ` Deal alerts are on for ${user.alerts.area === "all" ? "all of NYC" : user.alerts.area}.` : " Text \"alerts on\" to get bundled deal alerts."}
+          </p>
+        </Card>
+      </div>
     </div>
   );
 }

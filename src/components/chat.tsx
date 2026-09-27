@@ -73,7 +73,7 @@ export function Chat() {
 
   return (
     // Fill the screen below the title so the message box sits at the bottom, like a chat app.
-    <div className="flex min-h-[calc(100dvh-11rem)] flex-col">
+    <div className="flex min-h-[calc(100dvh-11rem)] flex-col lg:min-h-[calc(100dvh-8rem)]">
       {messages.length === 0 && (
         <div className="mb-4 rounded-[1.5rem] bg-hero p-5 text-hero-foreground">
           <p className="mb-4 flex items-center gap-2.5 text-sm text-hero-muted">
@@ -101,7 +101,7 @@ export function Chat() {
             {m.role === "assistant" && <Avatar />}
             <p
               className={cn(
-                "max-w-[82%] rounded-[1.25rem] px-4 py-2.5 whitespace-pre-wrap",
+                "max-w-[min(82%,44rem)] rounded-[1.25rem] px-4 py-2.5 whitespace-pre-wrap",
                 m.role === "user" ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md border bg-card",
               )}
             >

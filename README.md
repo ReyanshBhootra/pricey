@@ -96,6 +96,7 @@ Every page refreshes live: Firestore listeners when configured, 20 second pollin
 - **Price history** (`src/lib/history.ts`): item pages show a month trend line ("Up 17% this month"), and the agent can mention it.
 - **Still $3.99?**: prices nobody has confirmed in a week ask for a one-tap confirm on item pages, and people who text get one check-in a day about a stale price at a store they use.
 - **Real prices** (`npm run import:prices`): see below.
+- **Receipt reader** (`src/lib/receipt-reader.ts`): reads the photo as a layout (store and address at the top, each item with the price on its own row, subtotal/tax/total at the bottom), checks that the rows add up to the printed subtotal and re-reads once if not, then matches the text to Pricey items using a dictionary learned from every confirmed receipt before asking the model. Falls back to the original one-step parser on any failure; `RECEIPT_READER=basic` switches back entirely. Test: `npm run test:receipt`.
 
 ## Real prices from store websites
 

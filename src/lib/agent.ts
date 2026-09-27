@@ -67,12 +67,15 @@ PRIVACY AND SAFETY: never share anyone's phone number or personal details. Don't
 const FIRST = `THIS IS THEIR FIRST MESSAGE EVER TO PRICEY. Open with a warm hello (one or two sentences) saying who you are: you keep track of what food really costs around NYC, thanks to people like them. If their message is a real request, handle it too. Then, if you don't know where they are, ask for their ZIP or neighborhood so you can find stuff close by. Whole reply under 70 words. Don't list commands.`;
 
 // Totals are computed here, never by the model: "these add up to $45.69; receipt total $47.75".
-function receiptTotals(p: { lines: { price: number }[]; subtotal?: number | null; total?: number | null }): string {
+function receiptTotals(p: { lines: { price: number }[]; subtotal?: number | null; total?: number | null; checked?: boolean | null }): string {
   const sum = Math.round(p.lines.reduce((a, l) => a + l.price, 0) * 100) / 100;
   const parts = [`These ${p.lines.length} prices add up to ${money(sum)}.`];
   if (p.subtotal) parts.push(`Receipt prints subtotal ${money(p.subtotal)}.`);
   if (p.total) parts.push(`Receipt total (with tax) ${money(p.total)}; quote this one as the total.`);
-  if (p.subtotal && Math.abs(p.subtotal - sum) > 0.02) parts.push("The lines don't match the subtotal, so a line may be misread or missing: ask them to check.");
+  // The careful reader already checked the rows against the subtotal (quantities included).
+  const mismatch = p.checked === false || (p.checked == null && p.subtotal != null && Math.abs(p.subtotal - sum) > 0.02);
+  if (p.checked === true) parts.push("The reader checked every row against the printed subtotal: it adds up.");
+  else if (mismatch) parts.push("The lines don't match the subtotal, so a line may be misread or missing: ask them to check.");
   return parts.join(" ");
 }
 

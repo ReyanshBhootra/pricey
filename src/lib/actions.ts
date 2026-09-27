@@ -5,7 +5,7 @@ import { BOROUGH_PLACES, findPlace, placeFromCoords, placeFromZip } from "./plac
 import { WHERE_COOKIE, type Where } from "./where";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { addItem, addStore, createForumPost, getItem, getStore, saveUser, submitReport } from "./data";
+import { addItem, addStore, createForumPost, getItem, getStore, learnReceiptWords, saveUser, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
 import { findBorough, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
@@ -58,7 +58,7 @@ export async function submitReportAction(_prev: ReportState, form: FormData): Pr
   }
 }
 
-export type ReceiptLineInput = { itemId: string | null; name: string; category: Category; price: number };
+export type ReceiptLineInput = { itemId: string | null; name: string; category: Category; price: number; raw?: string };
 export type ReceiptSubmitState = { ok: true; saved: number; changed: number } | { ok: false; error: string };
 
 // Saves the lines a person confirmed after scanning a receipt, one report per line.
@@ -77,11 +77,15 @@ export async function submitReceiptAction(store: { storeId: string | null; newSt
 
     const uid = await userId();
     let changed = 0;
+    const learned: { raw?: string; itemId: string }[] = [];
     for (const l of good) {
       const itemId = l.itemId ?? (await addItem({ name: l.name.slice(0, 80), category: CATEGORIES.includes(l.category) ? l.category : "pantry" })).id;
       const r = await submitReport({ itemId, storeId, price: l.price, userId: uid, type: "price" });
       if (r.priceChanged) changed++;
+      learned.push({ raw: typeof l.raw === "string" ? l.raw.slice(0, 100) : undefined, itemId });
     }
+    // What they confirmed (including their corrections) teaches the receipt dictionary.
+    await learnReceiptWords(learned).catch(() => {});
     revalidatePath("/", "layout");
     return { ok: true, saved: good.length, changed };
   } catch (e) {

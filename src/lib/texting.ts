@@ -267,9 +267,9 @@ export async function handleText(from: string, raw: string, incoming: Incoming =
     // A photo: read it as a receipt and hold it until they confirm.
     if (/^image\//.test(a.mimeType) && geminiEnabled()) {
       try {
-        const r = await parseReceipt(a.data, a.mimeType);
+        const r = await parseReceipt(a.data, a.mimeType, 38_000); // leaves time for the reply in the 60s request
         if (r.lines.length) {
-          patch.pending = { kind: "receipt", storeId: r.storeId, storeName: r.storeName, storeAddress: r.storeAddress, subtotal: r.subtotal, total: r.total, lines: r.lines.map(({ name, price, itemId, category, raw }) => ({ name, price, itemId, category, raw })), at: now };
+          patch.pending = { kind: "receipt", storeId: r.storeId, storeName: r.storeName, storeAddress: r.storeAddress, subtotal: r.subtotal, total: r.total, checked: r.checked ?? null, lines: r.lines.map(({ name, price, itemId, category, raw }) => ({ name, price, itemId, category, raw })), at: now };
           note += `[They just sent a receipt photo. It's parsed and PENDING (see ABOUT THEM). Summarize it briefly: store, number of items, 3 or 4 example prices, and the total exactly as PENDING RECEIPT gives it (never add prices up yourself). ${r.storeId ? "" : "The store is new to Pricey: say so, and that it'll be added when they say yes. "}Ask them to reply yes to save, or tell you what to fix.]\n`;
         } else note += "[They sent a photo but it didn't look like a food receipt. Tell them kindly.]\n";
       } catch (e) {

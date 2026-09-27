@@ -1,6 +1,7 @@
 // Server only. Receipt photo -> store + item lines, matched to our catalog.
 import { getItems, getStores } from "./data";
 import { generate } from "./gemini";
+import { readReceipt } from "./receipt-reader";
 import { CATEGORIES, type Category } from "./types";
 
 export interface ReceiptLine {
@@ -18,6 +19,8 @@ export interface ParsedReceipt {
   subtotal: number | null; // as printed; we never add the lines up with the model
   total: number | null;
   lines: ReceiptLine[];
+  checked?: boolean | null; // rows add up to the printed subtotal (careful reader only)
+  reader?: "careful" | "basic";
 }
 
 const SCHEMA = {
@@ -46,7 +49,24 @@ const SCHEMA = {
   required: ["storeName", "storeId", "storeAddress", "subtotal", "total", "lines"],
 };
 
-export async function parseReceipt(image: Buffer, mimeType: string): Promise<ParsedReceipt> {
+// The careful reader first (receipt-reader.ts); the original one-step parser if it fails or runs
+// out of time. RECEIPT_READER=basic in Vercel switches back to the original entirely.
+export async function parseReceipt(image: Buffer, mimeType: string, timeoutMs = 50_000): Promise<ParsedReceipt> {
+  const deadline = Date.now() + timeoutMs;
+  if (process.env.RECEIPT_READER !== "basic") {
+    try {
+      const r = await readReceipt(image, mimeType, deadline);
+      console.log(`Receipt read carefully: ${r.lines.length} lines, adds up: ${r.checked ?? "no subtotal"}`);
+      return r;
+    } catch (e) {
+      console.error("Careful receipt reader failed, using the basic one:", e instanceof Error ? e.message : e);
+    }
+  }
+  return parseReceiptBasic(image, mimeType, Math.max(12_000, deadline - Date.now()));
+}
+
+// The original parser: one model call does everything. Kept as the fallback.
+export async function parseReceiptBasic(image: Buffer, mimeType: string, timeoutMs = 45_000): Promise<ParsedReceipt> {
   const [items, stores] = await Promise.all([getItems(), getStores()]);
 
   const prompt = `Read this grocery or food receipt from New York City.
@@ -68,7 +88,7 @@ ${stores.map((s) => `${s.id}: ${s.name}, ${s.borough}`).join("\n")}`;
       contents: [{ role: "user", parts: [{ inlineData: { mimeType, data: image.toString("base64") } }, { text: prompt }] }],
       config: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 },
     },
-    45000,
+    timeoutMs,
   );
 
   const data = JSON.parse(res.text ?? "{}") as Partial<ParsedReceipt>;
@@ -95,5 +115,6 @@ ${stores.map((s) => `${s.id}: ${s.name}, ${s.borough}`).join("\n")}`;
     subtotal: amount(data.subtotal),
     total: amount(data.total),
     lines,
+    reader: "basic",
   };
 }

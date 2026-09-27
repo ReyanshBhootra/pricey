@@ -35,6 +35,7 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
   const [lines, setLines] = useState<Line[] | null>(null);
   const [storeId, setStoreId] = useState("");
   const [storeName, setStoreName] = useState("");
+  const [check, setCheck] = useState<{ checked: boolean | null; subtotal: number | null } | null>(null);
   const [borough, setBorough] = useState("");
   const [result, setResult] = useState<ReceiptSubmitState | null>(null);
   const [saving, startSaving] = useTransition();
@@ -58,6 +59,7 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
       setLines(parsed.lines.map((l) => ({ ...l, keep: true, priceText: l.price.toFixed(2) })));
       setStoreId(parsed.storeId ?? (parsed.storeName ? "__new" : ""));
       setStoreName(parsed.storeName);
+      setCheck({ checked: parsed.checked ?? null, subtotal: parsed.subtotal ?? null });
     } catch (e) {
       setError(e instanceof DOMException && e.name === "TimeoutError" ? "That took too long. Try again with a smaller photo." : e instanceof Error ? e.message : "Scan failed.");
     } finally {
@@ -69,7 +71,7 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
 
   const save = () =>
     startSaving(async () => {
-      const chosen = lines!.filter((l) => l.keep).map((l) => ({ itemId: l.itemId, name: l.name, category: l.category, price: Number(l.priceText) }));
+      const chosen = lines!.filter((l) => l.keep).map((l) => ({ itemId: l.itemId, name: l.name, category: l.category, price: Number(l.priceText), raw: l.raw }));
       const r = await submitReceiptAction(
         storeId === "__new" ? { storeId: null, newStoreName: storeName, newStoreBorough: borough } : { storeId: storeId || null },
         chosen,
@@ -174,6 +176,10 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
           <p className="text-center text-xs text-muted-foreground">
             Total checked: {money(lines.filter((l) => l.keep).reduce((s, l) => s + (Number(l.priceText) || 0), 0))}
           </p>
+          {check?.checked === true && <p className="text-xs text-muted-foreground">Every line adds up to the receipt&apos;s subtotal{check.subtotal ? ` (${money(check.subtotal)})` : ""}.</p>}
+          {check?.checked === false && (
+            <p className="text-xs text-destructive">These lines don&apos;t add up to the receipt&apos;s subtotal{check.subtotal ? ` (${money(check.subtotal)})` : ""}. Check the prices before saving.</p>
+          )}
         </div>
       )}
     </div>

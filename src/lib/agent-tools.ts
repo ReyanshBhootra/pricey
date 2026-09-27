@@ -2,7 +2,7 @@
 // these functions do the real work against our data and return plain facts. Gemini never
 // sees a price that didn't come from here, and can't claim a save that didn't happen.
 
-import { addItem, addStore, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
+import { addItem, addStore, learnReceiptWords, createForumPost, getActiveEvents, getForumPosts, submitReport } from "./data";
 import { money, timeAgo } from "./format";
 import { byValue, cityIndex, distanceText, forgetCityCache, matchItems, toFact, type Located } from "./grounding";
 import { describeChange, priceHistory } from "./history";
@@ -358,6 +358,7 @@ export const TOOLS = {
       const drop = new Set((Array.isArray(a.remove) ? a.remove : []).map((r) => str(r).toLowerCase()));
       const fixes = Array.isArray(a.fixes) ? (a.fixes as Args[]) : [];
       let saved = 0;
+      const learned: { raw: string; itemId: string }[] = [];
       for (const line of pending.lines) {
         if ([...drop].some((d) => line.name.toLowerCase().includes(d) || d.includes(line.name.toLowerCase()))) continue;
         const fix = fixes.find((f) => line.name.toLowerCase().includes(str(f.name).toLowerCase()));
@@ -365,8 +366,11 @@ export const TOOLS = {
         if (!Number.isFinite(price) || price < 0) continue;
         const itemId = line.itemId ?? (await addItem({ name: line.name, category: line.category })).id;
         await submitReport({ itemId, storeId, price, userId: ctx.user.id, type: "price" });
+        learned.push({ raw: line.raw, itemId });
         saved++;
       }
+      // Confirmed lines teach the receipt dictionary (never blocks the save).
+      await learnReceiptWords(learned).catch(() => {});
       forgetCityCache();
       ctx.patch.pending = null;
       ctx.wrote = true;

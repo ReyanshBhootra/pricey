@@ -37,4 +37,5 @@ export const COLLECTIONS = {
   priceChanges: "priceChanges",
   users: "users",
   aliases: "aliases",
+  receiptWords: "receiptWords",
 } as const;

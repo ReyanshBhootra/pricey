@@ -114,7 +114,7 @@ export interface ChatTurn {
 }
 
 export type PendingAction =
-  | { kind: "receipt"; storeId: string | null; storeName: string; storeAddress?: string; subtotal?: number | null; total?: number | null; lines: { name: string; price: number; itemId: string | null; category: Category; raw: string }[]; at: number }
+  | { kind: "receipt"; storeId: string | null; storeName: string; storeAddress?: string; subtotal?: number | null; total?: number | null; checked?: boolean | null; lines: { name: string; price: number; itemId: string | null; category: Category; raw: string }[]; at: number }
   | { kind: "checkin"; itemId: string; storeId: string; price: number; at: number };
 
 export interface UserProfile {

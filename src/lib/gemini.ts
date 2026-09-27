@@ -8,6 +8,9 @@ const unique = (xs: (string | undefined)[]) => [...new Set(xs.filter((x): x is s
 // is tried first. Chat leads with fast lite models; receipts lead with the stronger model.
 export const CHAT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-flash-latest"]);
 export const RECEIPT_MODELS = unique([process.env.GEMINI_MODEL, "gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"]);
+// Reading a receipt photo is where accuracy matters most, so it leads with the strongest
+// models (RECEIPT_MODEL overrides), then falls back to the receipt list above.
+export const READER_MODELS = unique([process.env.RECEIPT_MODEL, "gemini-pro-latest", "gemini-2.5-pro", ...RECEIPT_MODELS]);
 
 export const geminiEnabled = () => Boolean(process.env.GEMINI_API_KEY);
 

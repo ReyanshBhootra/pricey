@@ -44,6 +44,7 @@ const seedMem = {
   priceChanges: [] as PriceChange[],
   users: {} as Record<string, UserProfile>,
   aliases: {} as Record<string, string>,
+  receiptWords: {} as Record<string, ReceiptWord>,
 };
 const mem = (g.__priceyMem ??= seedMem);
 
@@ -399,4 +400,62 @@ export async function getTextableUsers(): Promise<UserProfile[]> {
   if (!db) return Object.values(mem.users).filter((u) => u.spaceId).map((u) => structuredClone(u));
   const snap = await getDocs(query(collection(db, COLLECTIONS.users), where("spaceId", "!=", null)));
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }) as UserProfile);
+}
+
+// ---------- receipt dictionary ----------
+
+// What a store's register prints -> the Pricey item it is, learned from receipts people
+// confirmed ("BNLS CHKN THI" -> chicken-thighs-lb). Checked before asking the model, so a line
+// anyone has confirmed before is matched exactly. Like Fetch's feedback loop, at our size.
+export interface ReceiptWord {
+  text: string; // normalized receipt text
+  itemId: string;
+  count: number; // how many confirmations agree
+  at: number;
+}
+
+export const receiptKey = (raw: string) =>
+  raw
+    .toLowerCase()
+    .replace(/\$?\d+\.\d{2}\b/g, " ") // prices printed on the same line
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .slice(0, 80);
+
+let wordsCache: { at: number; map: Map<string, ReceiptWord> } | null = null;
+export async function getReceiptWords(): Promise<Map<string, ReceiptWord>> {
+  if (wordsCache && Date.now() - wordsCache.at < 60_000) return wordsCache.map;
+  const db = getDb();
+  let rows: ReceiptWord[] = Object.values(mem.receiptWords);
+  if (db) {
+    try {
+      rows = (await getDocs(collection(db, COLLECTIONS.receiptWords))).docs.map((d) => d.data() as ReceiptWord);
+    } catch (e) {
+      console.error("Receipt dictionary unavailable:", e instanceof Error ? e.message : e);
+      rows = [];
+    }
+  }
+  wordsCache = { at: Date.now(), map: new Map(rows.map((r) => [r.text, r])) };
+  return wordsCache.map;
+}
+
+// Called after a receipt is confirmed. Never blocks the save: a failure here only means the
+// dictionary doesn't grow this time.
+export async function learnReceiptWords(pairs: { raw?: string; itemId: string }[]) {
+  const db = getDb();
+  const known = await getReceiptWords();
+  for (const { raw, itemId } of pairs) {
+    const text = raw ? receiptKey(raw) : "";
+    if (text.length < 2 || !itemId) continue;
+    const prev = known.get(text);
+    // A different item needs to win more confirmations before it replaces the old answer.
+    const next: ReceiptWord = prev && prev.itemId !== itemId ? (prev.count > 1 ? { ...prev, count: prev.count - 1, at: Date.now() } : { text, itemId, count: 1, at: Date.now() }) : { text, itemId, count: (prev?.count ?? 0) + 1, at: Date.now() };
+    try {
+      if (!db) mem.receiptWords[text] = next;
+      else await setDoc(doc(db, COLLECTIONS.receiptWords, text.replace(/\s+/g, "_").slice(0, 120)), next);
+      known.set(text, next);
+    } catch (e) {
+      console.error("Could not learn receipt word:", e instanceof Error ? e.message : e);
+    }
+  }
 }

@@ -8,7 +8,7 @@
 // Then commit src/lib/real-prices.json and push; the site picks it up on the next deploy.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { checkImport, checkImportJson, domainOf } from "../src/lib/real-prices";
+import { addEstimates, checkImport, checkImportJson, domainOf } from "../src/lib/real-prices";
 
 const root = join(import.meta.dirname, "..");
 const out = join(root, "src/lib/real-prices.json");
@@ -57,6 +57,13 @@ if (errors.length) {
 if (args.has("--check")) {
   console.log("Looks good. Run without --check to load it.");
   process.exit(0);
+}
+// Gaps filled from data/estimates.json (skip with --no-estimates). Shown as "est." in the app.
+const estimates = join(dir, "estimates.json");
+if (existsSync(estimates) && !args.has("--no-estimates")) {
+  const { added, chainsMissing } = addEstimates(data, JSON.parse(readFileSync(estimates, "utf8")).chains ?? {});
+  console.log(`Filled ${added} gaps with Pricey estimates (shown as "est." until a shopper confirms).`);
+  if (chainsMissing.length) console.log(`  No estimates for: ${chainsMissing.join(", ")}`);
 }
 writeFileSync(out, JSON.stringify(data, null, 1) + "\n");
 console.log(`Wrote src/lib/real-prices.json${data.onlyReal ? " (real stores only)" : " (real prices replace the demo ones for these stores)"}.`);

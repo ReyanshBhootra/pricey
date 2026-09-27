@@ -1,0 +1,13 @@
+{
+  "about": "Pricey's estimates for the 12 supermarket items at the imported stores, used only where no real price was found. They show as 'est.' in the app until a shopper confirms or corrects them, and any real report replaces them. Target and CTown numbers reuse the real online prices found at Target Upper West Side and CTown Taaffe Place (regular, not sale, prices). The rest are typical late-2026 NYC regular prices for each chain's basic or store-brand version, per the units in docs/REAL_PRICES.md. Edit freely, then run npm run import:prices.",
+  "chains": {
+    "target": { "eggs-dozen": 1.89, "milk-gallon": 4.59, "bananas-lb": 0.69, "potatoes-5lb": 2.59, "avocado": 1.49, "onions-3lb": 2.69, "chicken-thighs-lb": 4.49, "ground-beef-lb": 5.99, "bread-loaf": 1.59, "rice-5lb": 4.39, "pasta-1lb": 1.49, "black-beans-can": 0.99 },
+    "trader": { "eggs-dozen": 3.29, "milk-gallon": 4.49, "bananas-lb": 0.75, "potatoes-5lb": 3.99, "avocado": 1.49, "onions-3lb": 3.49, "chicken-thighs-lb": 4.49, "ground-beef-lb": 5.99, "bread-loaf": 2.99, "pasta-1lb": 0.99, "black-beans-can": 0.99 },
+    "whole": { "eggs-dozen": 3.79, "milk-gallon": 5.49, "bananas-lb": 0.79, "potatoes-5lb": 4.99, "avocado": 1.99, "onions-3lb": 3.99, "chicken-thighs-lb": 5.99, "ground-beef-lb": 6.99, "bread-loaf": 2.99, "rice-5lb": 5.99, "pasta-1lb": 1.29, "black-beans-can": 1.19 },
+    "key": { "eggs-dozen": 3.99, "milk-gallon": 4.79, "bananas-lb": 0.69, "potatoes-5lb": 3.99, "avocado": 1.99, "onions-3lb": 3.49, "chicken-thighs-lb": 3.99, "ground-beef-lb": 5.99, "bread-loaf": 3.49, "rice-5lb": 5.99, "pasta-1lb": 1.49, "black-beans-can": 1.29 },
+    "fairway": { "eggs-dozen": 4.49, "milk-gallon": 5.29, "bananas-lb": 0.79, "potatoes-5lb": 4.49, "avocado": 2.29, "onions-3lb": 3.99, "chicken-thighs-lb": 4.99, "ground-beef-lb": 6.99, "bread-loaf": 3.99, "rice-5lb": 6.49, "pasta-1lb": 1.69, "black-beans-can": 1.49 },
+    "ctown": { "eggs-dozen": 2.15, "milk-gallon": 5.36, "bananas-lb": 1.06, "potatoes-5lb": 3.99, "avocado": 2.14, "onions-3lb": 3.49, "chicken-thighs-lb": 3.49, "ground-beef-lb": 5.99, "bread-loaf": 3.29, "rice-5lb": 6.98, "pasta-1lb": 1.29, "black-beans-can": 1.19 },
+    "food": { "eggs-dozen": 3.49, "milk-gallon": 4.99, "bananas-lb": 0.59, "potatoes-5lb": 2.99, "avocado": 1.25, "onions-3lb": 2.49, "chicken-thighs-lb": 2.99, "ground-beef-lb": 5.49, "bread-loaf": 2.99, "rice-5lb": 5.49, "pasta-1lb": 1.25, "black-beans-can": 0.99 },
+    "western": { "eggs-dozen": 3.29, "milk-gallon": 4.69, "bananas-lb": 0.59, "potatoes-5lb": 2.99, "avocado": 1.5, "onions-3lb": 2.49, "chicken-thighs-lb": 2.49, "ground-beef-lb": 4.99, "bread-loaf": 2.79, "rice-5lb": 5.29, "pasta-1lb": 1.19, "black-beans-can": 0.99 }
+  }
+}

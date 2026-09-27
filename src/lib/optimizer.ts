@@ -17,7 +17,7 @@ const TRANSIT_MIN = 20; // rough one-way subway or bus trip, door to door
 
 export interface Stop {
   store: Store;
-  items: { item: Item; price: number }[];
+  items: { item: Item; price: number; estimated?: boolean }[];
   subtotal: number;
   miles: number | null;
   distance: string | null; // "0.6 mi", or feet when it's right there
@@ -76,7 +76,10 @@ export async function optimizeList(names: string[], where: Located | null, match
   const priceAt = (itemId: string, storeId: string) => pricesFor(itemId).find((p) => p.storeId === storeId)?.price;
   const stopFor = (s: Store, list: Item[]): Stop => {
     const d = mi(s);
-    const got = list.map((item) => ({ item, price: priceAt(item.id, s.id) })).filter((x): x is { item: Item; price: number } => x.price !== undefined);
+    const got = list.flatMap((item) => {
+      const p = pricesFor(item.id).find((t) => t.storeId === s.id);
+      return p ? [{ item, price: p.price, ...(p.estimated && { estimated: true }) }] : [];
+    });
     return {
       store: s,
       items: got,
@@ -152,7 +155,7 @@ export function planForAgent(r: ShoppingResult) {
   const stop = (s: Stop) => ({
     store: s.store.name,
     distance: s.distance ? `${s.distance}${s.fare ? `, subway or bus (${money(s.fare)} round trip)` : `, ${s.walkMin} min walk`}` : undefined,
-    items: s.items.map((x) => `${x.item.name} ${money(x.price)}`),
+    items: s.items.map((x) => `${x.item.name} ${money(x.price)}${x.estimated ? " (estimate)" : ""}`),
     subtotal: money(s.subtotal),
   });
   return {
@@ -170,7 +173,7 @@ export function planText(r: ShoppingResult): string {
   if (!r.items.length) return `I don't track ${r.unknown.join(", ") || "those"} yet. Try things like eggs, milk, bread, bananas.`;
   if (!r.best) return "Nobody has reported prices for those near you yet. Be the first: text what you paid!";
   const line = (s: Stop) =>
-    `${s.store.name}${s.distance ? ` (${s.distance}${s.fare ? `, ${money(s.fare)} round trip by subway` : `, ${s.walkMin} min walk`})` : ""}: ${s.items.map((x) => `${x.item.name} ${money(x.price)}`).join(", ")}`;
+    `${s.store.name}${s.distance ? ` (${s.distance}${s.fare ? `, ${money(s.fare)} round trip by subway` : `, ${s.walkMin} min walk`})` : ""}: ${s.items.map((x) => `${x.item.name} ${x.estimated ? "about " : ""}${money(x.price)}`).join(", ")}`;
   const out = [`Best single stop: ${line(r.best.stops[0])}. Total ${money(r.best.total)}.`];
   if (r.split) out.push(`Or split it and save ${money(r.split.saves)}: ${r.split.stops.map(line).join(" / ")}.`);
   const missing = (r.split ?? r.best).missing;

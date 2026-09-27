@@ -1,5 +1,5 @@
 {
- "importedAt": 1790470642834,
+ "importedAt": 1790472385995,
  "onlyReal": false,
  "stores": [
   {
@@ -298,6 +298,1996 @@
    "userId": "import:ctownsupermarkets.com",
    "type": "price",
    "sourceUrl": "https://shop-mercato.ctownsupermarkets.com/ctown-supermarkets-241-taaffe-pl"
+  },
+  {
+   "id": "estimate-target-3394-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "target-3394",
+   "price": 0.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3394-avocado",
+   "itemId": "avocado",
+   "storeId": "target-3394",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3394-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "target-3394",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3394-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "target-3394",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "target-3229",
+   "price": 1.89,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "target-3229",
+   "price": 4.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "target-3229",
+   "price": 0.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "target-3229",
+   "price": 2.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-avocado",
+   "itemId": "avocado",
+   "storeId": "target-3229",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "target-3229",
+   "price": 2.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "target-3229",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "target-3229",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "target-3229",
+   "price": 1.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "target-3229",
+   "price": 4.39,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "target-3229",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-3229-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "target-3229",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "trader-joes-union-sq",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "trader-joes-union-sq",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 0.75,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-avocado",
+   "itemId": "avocado",
+   "storeId": "trader-joes-union-sq",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "trader-joes-union-sq",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "trader-joes-union-sq",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-union-sq-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "trader-joes-union-sq",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "wholefoods-unionsquare",
+   "price": 3.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "wholefoods-unionsquare",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 0.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-avocado",
+   "itemId": "avocado",
+   "storeId": "wholefoods-unionsquare",
+   "price": 1.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 6.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "wholefoods-unionsquare",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "wholefoods-unionsquare",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-unionsquare-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "wholefoods-unionsquare",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "keyfood-1750",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "keyfood-1750",
+   "price": 4.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "keyfood-1750",
+   "price": 0.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "keyfood-1750",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-avocado",
+   "itemId": "avocado",
+   "storeId": "keyfood-1750",
+   "price": 1.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "keyfood-1750",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "keyfood-1750",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "keyfood-1750",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "keyfood-1750",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "keyfood-1750",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "keyfood-1750",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-keyfood-1750-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "keyfood-1750",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "fairway-upper-west",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "fairway-upper-west",
+   "price": 5.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "fairway-upper-west",
+   "price": 0.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "fairway-upper-west",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-avocado",
+   "itemId": "avocado",
+   "storeId": "fairway-upper-west",
+   "price": 2.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "fairway-upper-west",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "fairway-upper-west",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "fairway-upper-west",
+   "price": 6.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "fairway-upper-west",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "fairway-upper-west",
+   "price": 6.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "fairway-upper-west",
+   "price": 1.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-fairway-upper-west-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "fairway-upper-west",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "target-1849",
+   "price": 1.89,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "target-1849",
+   "price": 4.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "target-1849",
+   "price": 0.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "target-1849",
+   "price": 2.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-avocado",
+   "itemId": "avocado",
+   "storeId": "target-1849",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "target-1849",
+   "price": 2.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "target-1849",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "target-1849",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "target-1849",
+   "price": 1.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "target-1849",
+   "price": 4.39,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "target-1849",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1849-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "target-1849",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 0.75,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-avocado",
+   "itemId": "avocado",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-trader-joes-downtown-bk-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "trader-joes-downtown-bk",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 3.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 0.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-avocado",
+   "itemId": "avocado",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 1.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 6.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-wholefoods-thirdand3rd-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "wholefoods-thirdand3rd",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "ctown-taaffe",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "ctown-taaffe",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "ctown-taaffe",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "ctown-taaffe",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "ctown-taaffe",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "ctown-taaffe",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-taaffe-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "ctown-taaffe",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "foodbazaar-redhook",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "foodbazaar-redhook",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 0.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-avocado",
+   "itemId": "avocado",
+   "storeId": "foodbazaar-redhook",
+   "price": 1.25,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 2.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "foodbazaar-redhook",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "foodbazaar-redhook",
+   "price": 1.25,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-redhook-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "foodbazaar-redhook",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "target-1344",
+   "price": 1.89,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "target-1344",
+   "price": 4.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "target-1344",
+   "price": 0.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "target-1344",
+   "price": 2.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-avocado",
+   "itemId": "avocado",
+   "storeId": "target-1344",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "target-1344",
+   "price": 2.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "target-1344",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "target-1344",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "target-1344",
+   "price": 1.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "target-1344",
+   "price": 4.39,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "target-1344",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-target-1344-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "target-1344",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "traderjoes-578",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "traderjoes-578",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "traderjoes-578",
+   "price": 0.75,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "traderjoes-578",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-avocado",
+   "itemId": "avocado",
+   "storeId": "traderjoes-578",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "traderjoes-578",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "traderjoes-578",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "traderjoes-578",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "traderjoes-578",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "traderjoes-578",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-578-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "traderjoes-578",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "foodbazaar-northern",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "foodbazaar-northern",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "foodbazaar-northern",
+   "price": 0.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "foodbazaar-northern",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-avocado",
+   "itemId": "avocado",
+   "storeId": "foodbazaar-northern",
+   "price": 1.25,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "foodbazaar-northern",
+   "price": 2.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "foodbazaar-northern",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "foodbazaar-northern",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "foodbazaar-northern",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "foodbazaar-northern",
+   "price": 5.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "foodbazaar-northern",
+   "price": 1.25,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-foodbazaar-northern-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "foodbazaar-northern",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "ctown-crossbay",
+   "price": 2.15,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "ctown-crossbay",
+   "price": 5.36,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "ctown-crossbay",
+   "price": 1.06,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "ctown-crossbay",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-avocado",
+   "itemId": "avocado",
+   "storeId": "ctown-crossbay",
+   "price": 2.14,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "ctown-crossbay",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "ctown-crossbay",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "ctown-crossbay",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "ctown-crossbay",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "ctown-crossbay",
+   "price": 6.98,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "ctown-crossbay",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-crossbay-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "ctown-crossbay",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "ctown-204th",
+   "price": 2.15,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "ctown-204th",
+   "price": 5.36,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "ctown-204th",
+   "price": 1.06,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "ctown-204th",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-avocado",
+   "itemId": "avocado",
+   "storeId": "ctown-204th",
+   "price": 2.14,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "ctown-204th",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "ctown-204th",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "ctown-204th",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "ctown-204th",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "ctown-204th",
+   "price": 6.98,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "ctown-204th",
+   "price": 1.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-ctown-204th-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "ctown-204th",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "westernbeef-webster",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "westernbeef-webster",
+   "price": 4.69,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "westernbeef-webster",
+   "price": 0.59,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "westernbeef-webster",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-avocado",
+   "itemId": "avocado",
+   "storeId": "westernbeef-webster",
+   "price": 1.5,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "westernbeef-webster",
+   "price": 2.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "westernbeef-webster",
+   "price": 2.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "westernbeef-webster",
+   "price": 4.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "westernbeef-webster",
+   "price": 2.79,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-rice-5lb",
+   "itemId": "rice-5lb",
+   "storeId": "westernbeef-webster",
+   "price": 5.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "westernbeef-webster",
+   "price": 1.19,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-westernbeef-webster-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "westernbeef-webster",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-eggs-dozen",
+   "itemId": "eggs-dozen",
+   "storeId": "traderjoes-559",
+   "price": 3.29,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-milk-gallon",
+   "itemId": "milk-gallon",
+   "storeId": "traderjoes-559",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-bananas-lb",
+   "itemId": "bananas-lb",
+   "storeId": "traderjoes-559",
+   "price": 0.75,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-potatoes-5lb",
+   "itemId": "potatoes-5lb",
+   "storeId": "traderjoes-559",
+   "price": 3.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-avocado",
+   "itemId": "avocado",
+   "storeId": "traderjoes-559",
+   "price": 1.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-onions-3lb",
+   "itemId": "onions-3lb",
+   "storeId": "traderjoes-559",
+   "price": 3.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-chicken-thighs-lb",
+   "itemId": "chicken-thighs-lb",
+   "storeId": "traderjoes-559",
+   "price": 4.49,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-ground-beef-lb",
+   "itemId": "ground-beef-lb",
+   "storeId": "traderjoes-559",
+   "price": 5.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-bread-loaf",
+   "itemId": "bread-loaf",
+   "storeId": "traderjoes-559",
+   "price": 2.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-pasta-1lb",
+   "itemId": "pasta-1lb",
+   "storeId": "traderjoes-559",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
+  },
+  {
+   "id": "estimate-traderjoes-559-black-beans-can",
+   "itemId": "black-beans-can",
+   "storeId": "traderjoes-559",
+   "price": 0.99,
+   "timestamp": 1790472386002,
+   "userId": "estimate:pricey",
+   "type": "price",
+   "note": "Estimate"
   }
  ]
 }

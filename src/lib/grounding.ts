@@ -149,7 +149,7 @@ export async function buildContext(question: string, where?: Located | null): Pr
   }));
 
   const line = (p: PriceFact) =>
-    `${money(p.price)} at ${p.storeName} (${p.borough}${p.distanceKm !== null ? `, ${distanceText(p.distanceKm, where)}` : ""}; ${p.votes} of ${p.totalReports} reporters agree; updated ${timeAgo(p.lastReportedAt)})`;
+    `${money(p.price)} at ${p.storeName} (${p.borough}${p.distanceKm !== null ? `, ${distanceText(p.distanceKm, where)}` : ""}; ${p.estimated ? "ESTIMATE, not yet confirmed by anyone" : `${p.votes} of ${p.totalReports} reporters agree`}; updated ${timeAgo(p.lastReportedAt)})`;
 
   const text = [
     `Today: ${new Date().toDateString()}. City: New York City.`,
@@ -176,6 +176,7 @@ export const SYSTEM_PROMPT = `You are Pricey, a friendly assistant for grocery a
 Answer ONLY from the DATA block. Prices there are real reports from New Yorkers, vouched by majority.
 Rules:
 - Quote exact prices and store names from DATA. Never invent a store, item, or price.
+- A price marked ESTIMATE is Pricey's guess: say "about $X (estimate)".
 - If DATA has nothing for what was asked, say nobody has reported it yet and suggest reporting it on Pricey.
 - For "near me" questions, prefer closer stores and mention the distance when you have it.
 - For meal or cooking questions: ingredients or tools the user says they already have (for example paneer, an air fryer) can be used freely, and you may give simple cooking steps from general knowledge. Anything they would need to BUY must come from DATA with its price and store; give the total of what to buy. If a needed ingredient is not in DATA, say nobody has reported its price yet.

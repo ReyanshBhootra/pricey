@@ -108,7 +108,7 @@ npm run import:prices -- --only-real  # same, but hides the made-up demo stores 
 npm run import:prices -- --clear      # back to demo data only
 ```
 
-Commit `src/lib/real-prices.json` and push. It ships with the app and the data layer merges it in on every read, so it works with or without Firebase and needs no database writes. Real prices replace the demo votes for the same store and item (so made-up reporters can't outvote them), each website counts as one voice, and shoppers who report a different shelf price outvote it the normal way. Store pages say where the starting prices came from.
+Commit `src/lib/real-prices.json` and push. It ships with the app and the data layer merges it in on every read, so it works with or without Firebase and needs no database writes. Real prices replace the demo votes for the same store and item (so made-up reporters can't outvote them), each website counts as one voice, and shoppers who report a different shelf price outvote it the normal way. Store pages say where the starting prices came from. Items nobody found a real price for are filled from `data/estimates.json` (per-chain estimates, anchored to real prices where we have them): they show as **est.** with a one-tap "Right price?" confirm, the agent calls them estimates, the monthly trend ignores them, and any real report replaces them. Skip them with `--no-estimates`.
 
 ## Who owns what
 

@@ -17,8 +17,13 @@ const median = (xs: number[]) => {
 
 export async function priceHistory(itemId: string, days = 30, storeId?: string): Promise<PriceHistory> {
   const { reports } = await cityIndex();
-  const mine = reports.filter((r) => r.type === "price" && r.itemId === itemId && (!storeId || r.storeId === storeId));
+  // Real reports only (estimates aren't observations), from stores that already had a price when
+  // the window starts: stores joining later would shift the median without any price moving.
   const now = Date.now();
+  const real = reports.filter((r) => r.type === "price" && r.itemId === itemId && !r.userId.startsWith("estimate:") && (!storeId || r.storeId === storeId));
+  const start = now - days * DAY;
+  const tracked = new Set(trustedPricesByStore(real.filter((r) => r.timestamp <= start)).map((t) => t.storeId));
+  const mine = real.filter((r) => tracked.has(r.storeId));
   const points: PriceHistory["points"] = [];
   for (let d = days; d >= 0; d--) {
     const asOf = now - d * DAY;

@@ -21,7 +21,8 @@ export default async function StorePage({ params }: PageProps<"/store/[id]">) {
   const prices = trustedPricesByItem(reports);
   const dayAgo = hoursAgo(24);
   const events = reports.filter((r) => r.type === "event" && r.timestamp >= dayAgo);
-  const recent = reports.filter((r) => r.type === "price").slice(0, 8);
+  // Estimates aren't anyone's report, so they stay out of "Latest reports".
+  const recent = reports.filter((r) => r.type === "price" && !r.userId.startsWith("estimate:")).slice(0, 8);
   // Prices read from the store's own website (npm run import:prices).
   const imported = reports.filter((r) => r.sourceUrl && r.userId.startsWith("import:"));
   const sites = [...new Set(imported.map((r) => domainOf(r.sourceUrl)).filter(Boolean))];
@@ -61,6 +62,16 @@ export default async function StorePage({ params }: PageProps<"/store/[id]">) {
         </p>
       )}
 
+      {prices.some((p) => p.estimated) && (
+        <p className="mb-4 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          Prices marked <span className="font-medium text-foreground">est.</span> are Pricey&apos;s estimates for this chain until a shopper confirms them. Shop here?{" "}
+          <Link href={`/report?store=${store.id}`} className="text-primary hover:underline">
+            Report what you paid
+          </Link>
+          .
+        </p>
+      )}
+
       {events.length > 0 && (
         <div className="mb-5 space-y-2 rounded-xl border bg-brand-soft p-4 text-sm">
           {events.map((e) => (
@@ -90,7 +101,7 @@ export default async function StorePage({ params }: PageProps<"/store/[id]">) {
                       <span className="truncate">{item.get(p.itemId)?.name ?? p.itemId}</span>
                       <span className="shrink-0 tabular-nums">
                         <strong>{money(p.price)}</strong>
-                        <span className="ml-1 text-xs text-muted-foreground">×{p.votes}</span>
+                        <span className="ml-1 text-xs text-muted-foreground">{p.estimated ? "est." : `×${p.votes}`}</span>
                       </span>
                     </Link>
                   </li>

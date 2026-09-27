@@ -311,3 +311,29 @@ export function mergeReports(rows: Report[], keep: (r: Report) => boolean = () =
   for (const r of real.reports) if (keep(r) && !have.has(r.id)) out.push(r);
   return out;
 }
+
+// ---------- estimates for the gaps ----------
+
+// Fills items nobody found a real price for at an imported store, from a per-chain table
+// (data/estimates.json). Marked as Pricey's own estimate: the app shows "est." and asks
+// shoppers to confirm, and any real report outvotes it.
+export function addEstimates(data: RealPrices, chains: Record<string, Record<string, number>>, now = Date.now()): { added: number; chainsMissing: string[] } {
+  const chainOf = (name: string) => name.split(/\s+/)[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+  const items = new Set(SEED_ITEMS.map((i) => i.id));
+  const have = new Set(data.reports.map((r) => `${r.storeId}|${r.itemId}`));
+  const chainsMissing = new Set<string>();
+  let added = 0;
+  for (const store of data.stores) {
+    const table = chains[chainOf(store.name)];
+    if (!table) {
+      chainsMissing.add(store.name);
+      continue;
+    }
+    for (const [itemId, price] of Object.entries(table)) {
+      if (!items.has(itemId) || !(price > 0 && price < 200) || have.has(`${store.id}|${itemId}`)) continue;
+      data.reports.push({ id: `estimate-${store.id}-${itemId}`, itemId, storeId: store.id, price: Math.round(price * 100) / 100, timestamp: now, userId: "estimate:pricey", type: "price", note: "Estimate" });
+      added++;
+    }
+  }
+  return { added, chainsMissing: [...chainsMissing] };
+}

@@ -92,7 +92,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
         <span className="truncate">{itemName.get(p.itemId) ?? p.itemId}</span>
         <span className="shrink-0 tabular-nums">
           <strong>{money(p.price)}</strong>
-          <span className="ml-1 text-xs text-muted-foreground">×{p.votes}</span>
+          <span className="ml-1 text-xs text-muted-foreground">{p.estimated ? "est." : `×${p.votes}`}</span>
         </span>
       </Link>
     </li>

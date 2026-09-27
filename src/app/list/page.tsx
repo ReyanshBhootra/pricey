@@ -31,12 +31,15 @@ function StopCard({ stop, step }: { stop: Stop; step?: number }) {
         )}
       </div>
       <ul className="divide-y rounded-lg border text-sm">
-        {stop.items.map(({ item, price }) => (
+        {stop.items.map(({ item, price, estimated }) => (
           <li key={item.id} className="flex justify-between gap-3 px-3 py-2">
             <Link href={`/item/${item.id}`} className="truncate hover:underline">
               {item.name}
             </Link>
-            <span className="tabular-nums">{money(price)}</span>
+            <span className="tabular-nums">
+              {estimated && <span className="mr-1.5 text-xs text-muted-foreground">est.</span>}
+              {money(price)}
+            </span>
           </li>
         ))}
       </ul>

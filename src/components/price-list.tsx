@@ -29,9 +29,12 @@ export function PriceList({ prices, stores, highlight }: { prices: TrustedPrice[
             <div className="shrink-0 text-right">
               <div className="flex items-center justify-end gap-2 font-semibold tabular-nums">
                 {p.price === cheapest && prices.length > 1 && <Badge>lowest</Badge>}
+                {p.estimated && <Badge variant="outline">est.</Badge>}
                 {money(p.price)}
               </div>
-              {p.lastReportedAt < staleBefore ? (
+              {p.estimated ? (
+                <StillPrice itemId={p.itemId} storeId={p.storeId} price={p.price} estimated />
+              ) : p.lastReportedAt < staleBefore ? (
                 <StillPrice itemId={p.itemId} storeId={p.storeId} price={p.price} />
               ) : (
               <div className="text-xs text-muted-foreground">

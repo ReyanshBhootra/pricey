@@ -8,7 +8,7 @@ import { Check } from "lucide-react";
 import { confirmPriceAction } from "@/lib/actions";
 import { money } from "@/lib/format";
 
-export function StillPrice({ itemId, storeId, price }: { itemId: string; storeId: string; price: number }) {
+export function StillPrice({ itemId, storeId, price, estimated }: { itemId: string; storeId: string; price: number; estimated?: boolean }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<"ask" | "done" | string>("ask");
 
@@ -21,7 +21,7 @@ export function StillPrice({ itemId, storeId, price }: { itemId: string; storeId
   }
   return (
     <span className="flex flex-wrap items-center justify-end gap-x-2 text-xs">
-      <span className="text-muted-foreground">Still {money(price)}?</span>
+      <span className="text-muted-foreground">{estimated ? "Estimate. Right price?" : `Still ${money(price)}?`}</span>
       <button
         type="button"
         disabled={pending}

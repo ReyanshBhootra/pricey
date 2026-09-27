@@ -51,9 +51,11 @@ export function trustedPrice(reports: Report[], weighted = true): TrustedPrice |
     itemId: priced[0].itemId,
     storeId: priced[0].storeId,
     price: cents / 100,
-    votes: winners.length,
-    totalReports: priced.length,
+    // People only: Pricey's own estimate helps pick a price but isn't counted as someone agreeing.
+    votes: winners.filter((r) => !r.userId.startsWith("estimate:")).length || winners.length,
+    totalReports: priced.filter((r) => !r.userId.startsWith("estimate:")).length || priced.length,
     lastReportedAt: Math.max(...priced.map((r) => r.timestamp)),
+    ...(winners.every((r) => r.userId.startsWith("estimate:")) && { estimated: true }),
   };
 }
 

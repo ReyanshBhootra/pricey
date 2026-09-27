@@ -87,6 +87,7 @@ export interface TrustedPrice {
   votes: number; // reports agreeing on this price
   totalReports: number;
   lastReportedAt: number;
+  estimated?: boolean; // only Pricey's own estimate backs it; nobody has confirmed it yet
 }
 
 export interface SubmitResult {

@@ -92,7 +92,7 @@ export const TOOLS = {
             store: f.storeName,
             borough: f.borough,
             distance: f.distanceKm !== null ? distanceText(f.distanceKm, where) : undefined,
-            agree: `${f.votes} of ${f.totalReports} reporters`,
+            agree: f.estimated ? "Pricey's estimate, nobody has confirmed it yet" : `${f.votes} of ${f.totalReports} reporters`,
             updated: timeAgo(f.lastReportedAt),
           })),
         });
@@ -129,7 +129,7 @@ export const TOOLS = {
       const prices = items
         .map((i) => ({ i, p: pricesFor(i.id).find((p) => p.storeId === store.id) }))
         .filter((x) => x.p)
-        .map((x) => ({ item: x.i.name, price: money(x.p!.price), agree: x.p!.votes, updated: timeAgo(x.p!.lastReportedAt) }));
+        .map((x) => ({ item: x.i.name, price: money(x.p!.price), agree: x.p!.estimated ? "estimate, unconfirmed" : x.p!.votes, updated: timeAgo(x.p!.lastReportedAt) }));
       const deals = (await getActiveEvents({ hours: 24 })).filter((e) => e.storeId === store.id).map((e) => e.note ?? itemById.get(e.itemId)?.name);
       const where = resolveWhere("", ctx);
       return {

@@ -1,19 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bagel_Fat_One, Figtree } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/nav";
 import { AccountSync } from "@/components/account-sync";
 import { getUser } from "@/lib/data";
 import { sessionUserId } from "@/lib/session";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Figtree for reading. Bagel Fat One (chunky, very New York) for headlines and prices.
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const bagel = Bagel_Fat_One({
+  variable: "--font-bagel",
   subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -23,8 +25,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafaf8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0f0f" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f6ef" },
+    { media: "(prefers-color-scheme: dark)", color: "#170c1f" },
   ],
 };
 
@@ -34,14 +36,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${figtree.variable} ${bagel.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
         <Nav signedIn={Boolean(account)} />
         {profile && <AccountSync tracked={profile.tracked ?? []} favorites={profile.favorites ?? []} />}
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">{children}</main>
-        <footer className="mx-auto w-full max-w-2xl px-4 py-6 text-xs text-muted-foreground">
-          Pricey. Prices reported by New Yorkers, trusted by vouching. NYC only.
+        <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-6">{children}</main>
+        {/* Bottom padding on phones clears the floating tab bar. */}
+        <footer className="mx-auto w-full max-w-2xl px-4 pt-2 pb-32 text-sm text-muted-foreground sm:pb-8">
+          Prices reported by New Yorkers and trusted by vouching. NYC only.
         </footer>
       </body>
     </html>

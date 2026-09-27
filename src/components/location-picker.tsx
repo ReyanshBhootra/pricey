@@ -42,7 +42,7 @@ export function LocationPicker({ where }: { where: PickerWhere }) {
 
   const locate = () => {
     if (!navigator.geolocation) return setStatus("This browser can't share location. Type your ZIP instead.");
-    setStatus("Finding you...");
+    setStatus("Finding you…");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => save({ lat: coords.latitude, lng: coords.longitude }),
       (e) => setStatus(GEO_ERRORS[e.code] ?? GEO_ERRORS[2]),
@@ -63,10 +63,10 @@ export function LocationPicker({ where }: { where: PickerWhere }) {
   }, []);
 
   return (
-    <div className="mb-4 space-y-2">
+    <div className="mb-5 flex flex-col gap-2">
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <button type="button" onClick={() => locate()} disabled={pending} className={chipClass(where?.kind === "gps")}>
-          <LocateFixed className="mr-1.5 size-3.5" />
+          <LocateFixed className="size-3.5" />
           Near me
         </button>
         {BOROUGHS.map((b) => (
@@ -82,12 +82,12 @@ export function LocationPicker({ where }: { where: PickerWhere }) {
         }}
         className="flex max-w-sm gap-2"
       >
-        <label className={cn("flex h-9 flex-1 items-center gap-2 rounded-full border bg-card px-3 text-sm", where?.kind === "place" && "border-foreground")}>
+        <label className={cn("flex h-9 flex-1 items-center gap-2 rounded-full border bg-card px-3 text-sm focus-within:ring-[3px] focus-within:ring-ring/50", where?.kind === "place" && "border-primary")}>
           <MapPin className="size-4 shrink-0 text-muted-foreground" />
           <input
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={where?.kind === "place" ? `Near ${where.label} · change ZIP` : "Your ZIP or neighborhood"}
+            placeholder={where?.kind === "place" ? `Near ${where.label}. Change ZIP` : "Your ZIP or neighborhood"}
             aria-label="Your ZIP or neighborhood"
             className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
             inputMode="text"
@@ -95,7 +95,7 @@ export function LocationPicker({ where }: { where: PickerWhere }) {
           />
         </label>
         <button type="submit" disabled={pending || !text.trim()} className={cn(chipClass(false), "h-9 disabled:opacity-50")}>
-          {pending ? "..." : "Go"}
+          {pending ? "…" : "Go"}
         </button>
       </form>
       {status && <p className="text-xs text-muted-foreground">{status}</p>}

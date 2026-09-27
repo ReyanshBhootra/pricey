@@ -1,8 +1,10 @@
 "use client";
 
-import { CheckCircle2, LocateFixed } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useState } from "react";
+import { selectClass } from "@/components/chip";
+import { Sticker } from "@/components/sticker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +14,6 @@ import { BOROUGHS, CATEGORIES, type Item, type Store } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const NEW = "__new";
-
-// Native select styled like the shadcn Input: works everywhere, great on phones.
-const selectClass =
-  "h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
 
 type Props = { items: Item[]; stores: Store[]; itemId: string; storeId: string; newItemName?: string };
 
@@ -48,7 +46,7 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
   };
 
   const useMyLocation = () => {
-    setLocMsg("Finding you...");
+    setLocMsg("Finding you…");
     navigator.geolocation?.getCurrentPosition(
       ({ coords: c }) => {
         if (inNyc(c.latitude, c.longitude)) {
@@ -68,9 +66,9 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="space-y-4 rounded-xl border bg-card p-4 shadow-xs"
+      className="flex flex-col gap-5 rounded-[1.5rem] border bg-card p-4"
     >
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="itemId">Item</Label>
         <select id="itemId" name="itemId" required value={item} onChange={(e) => (setItem(e.target.value), sync(e.target.value, store))} className={selectClass}>
           <option value="">Pick an item</option>
@@ -96,7 +94,7 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="storeId">Store</Label>
         <select id="storeId" name="storeId" required value={store} onChange={(e) => (setStore(e.target.value), sync(item, e.target.value))} className={selectClass}>
           <option value="">Pick a store</option>
@@ -110,7 +108,7 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
           ))}
         </select>
         {store === NEW && (
-          <div className="space-y-2 pt-1">
+          <div className="flex flex-col gap-2 pt-1">
             <div className="grid grid-cols-[1fr_auto] gap-2">
               <Input name="newStoreName" required maxLength={100} placeholder="e.g. Associated on 5th Ave" aria-label="New store name" />
               <select name="newStoreBorough" required defaultValue="" aria-label="New store borough" className={cn(selectClass, "w-auto")}>
@@ -132,10 +130,10 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="price">Price you saw</Label>
         <div className="relative">
-          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+          <span className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 font-display text-2xl text-lime-foreground">$</span>
           <Input
             id="price"
             name="price"
@@ -148,19 +146,19 @@ export function ReportForm({ items, stores, itemId, storeId, newItemName }: Prop
             placeholder="3.49"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            className="pl-7"
+            className="h-16 rounded-2xl border-transparent bg-lime pl-11 font-display text-4xl text-lime-foreground tabular-nums placeholder:text-lime-foreground/35 focus-visible:ring-ring md:text-4xl dark:bg-lime"
           />
         </div>
       </div>
 
       <Button disabled={pending} size="lg" className="w-full">
-        {pending ? "Saving..." : "Submit price"}
+        {pending ? "Saving…" : "Add my price"}
       </Button>
 
       {state && !state.ok && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.ok && (
-        <p className="flex gap-2 rounded-lg bg-brand-soft p-3 text-sm">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+        <p key={state.result.report.id} role="status" className="flex items-center gap-4 rounded-2xl bg-brand-soft p-3 pr-4 text-sm">
+          <Sticker price={state.result.newPrice ?? state.result.report.price} label="counted" size="sm" slap />
           <span>
             {state.result.priceChanged
               ? `Thanks! Your report moved the trusted price from ${money(state.result.oldPrice!)} to ${money(state.result.newPrice!)}.`

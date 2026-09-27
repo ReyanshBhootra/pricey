@@ -1,17 +1,15 @@
 "use client";
 
-import { Camera, CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Receipt } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { selectClass } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { submitReceiptAction, type ReceiptSubmitState } from "@/lib/actions";
 import { money } from "@/lib/format";
 import type { ParsedReceipt } from "@/lib/receipt";
 import { BOROUGHS, type Item, type Store } from "@/lib/types";
-
-const selectClass =
-  "h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30";
 
 type Line = ParsedReceipt["lines"][number] & { keep: boolean; priceText: string };
 
@@ -81,7 +79,7 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
 
   if (result?.ok) {
     return (
-      <div className="rounded-xl border bg-brand-soft p-5 text-center">
+      <div className="rounded-[1.5rem] bg-brand-soft p-6 text-center animate-in fade-in zoom-in-95">
         <CheckCircle2 className="mx-auto mb-2 size-8 text-primary" />
         <p className="font-semibold">Saved {result.saved} prices. Thank you!</p>
         {result.changed > 0 && <p className="text-sm">{result.changed} of them changed a trusted price.</p>}
@@ -98,29 +96,34 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
   const kept = lines?.filter((l) => l.keep).length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed bg-card p-6 text-center shadow-xs hover:bg-accent">
+    <div className="flex flex-col gap-4">
+      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-[1.5rem] border-2 border-dashed border-input bg-card p-8 text-center transition-colors hover:border-primary has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={preview} alt="Your receipt" className="max-h-64 rounded-md object-contain" />
+          <span className="relative overflow-hidden rounded-xl">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a local blob preview, nothing to optimize */}
+            <img src={preview} alt="Your receipt" className="max-h-64 object-contain" />
+            {scanning && <span aria-hidden className="scan-line absolute inset-x-0 top-0 h-1 rounded-full bg-lime shadow-[0_0_18px_6px_var(--lime)]" />}
+          </span>
         ) : (
-          <Camera className="size-8 text-primary" />
+          <span className="sticker mb-1 grid size-16 place-items-center rounded-full bg-lime text-lime-foreground">
+            <Receipt className="size-7" />
+          </span>
         )}
-        <span className="font-medium">{preview ? "Use a different photo" : "Take or upload a receipt photo"}</span>
+        <span className="font-semibold">{preview ? "Use a different photo" : "Take or upload a receipt photo"}</span>
         <span className="text-xs text-muted-foreground">Flat, well lit, whole receipt in frame.</span>
         <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => scan(e.target.files?.[0])} />
       </label>
 
       {scanning && (
         <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" /> Reading your receipt with Gemini...
+          <Loader2 className="size-4 animate-spin" /> Reading your receipt with Gemini…
         </p>
       )}
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {lines && (
-        <div className="space-y-4 rounded-xl border bg-card p-4 shadow-xs">
-          <div className="space-y-1.5">
+        <div className="flex flex-col gap-4 rounded-[1.5rem] border bg-card p-4 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex flex-col gap-1.5">
             <p className="text-sm font-medium">Store</p>
             <select value={storeId} onChange={(e) => setStoreId(e.target.value)} className={selectClass} aria-label="Store">
               <option value="">Pick the store</option>
@@ -166,7 +169,7 @@ export function ReceiptScanner({ items, stores }: { items: Item[]; stores: Store
 
           {result && !result.ok && <p className="text-sm text-destructive">{result.error}</p>}
           <Button size="lg" className="w-full" disabled={saving || !kept || !storeId} onClick={save}>
-            {saving ? "Saving..." : `Save ${kept} ${kept === 1 ? "price" : "prices"}`}
+            {saving ? "Saving…" : `Save ${kept} ${kept === 1 ? "price" : "prices"}`}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             Total checked: {money(lines.filter((l) => l.keep).reduce((s, l) => s + (Number(l.priceText) || 0), 0))}

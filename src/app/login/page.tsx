@@ -10,8 +10,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (await sessionUserId()) redirect(next);
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">Log in to Pricey</h1>
-      <p className="mb-5 text-sm text-muted-foreground">Keep your reports, tracked items, and favorites in one place, on the web and over text.</p>
+      <h1 className="mb-2 text-[2.6rem] leading-[0.95]">Log in to Pricey</h1>
+      <p className="mb-5 text-muted-foreground">Keep your reports, tracked items, and favorites in one place, on the web and over text.</p>
       <LoginForm next={next} />
     </div>
   );

@@ -62,7 +62,7 @@ export function LoginForm({ next }: { next: string }) {
   const verifier = useRef<RecaptchaVerifier | null>(null);
   const app = getFirebaseApp();
 
-  if (!app) return <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Login needs Firebase to be set up for this site.</p>;
+  if (!app) return <p className="rounded-[1.5rem] border-2 border-dashed p-6 text-center text-sm text-muted-foreground">Login needs Firebase to be set up for this site.</p>;
 
   const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,10 +115,10 @@ export function LoginForm({ next }: { next: string }) {
   };
 
   return (
-    <div className="rounded-2xl border bg-card p-5 shadow-xs">
+    <div className="rounded-[1.5rem] border bg-card p-5">
       {step === "phone" && (
-        <form onSubmit={sendCode} className="space-y-4">
-          <div className="space-y-1.5">
+        <form onSubmit={sendCode} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="phone">Phone number</Label>
             <div className="relative">
               <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -127,22 +127,22 @@ export function LoginForm({ next }: { next: string }) {
             <p className="text-xs text-muted-foreground">We text you a 6-digit code. No password. Use the same number you text Pricey from and it&apos;s one account.</p>
           </div>
           <Button disabled={busy} size="lg" className="w-full">
-            {busy ? "Sending..." : "Text me a code"}
+            {busy ? "Sending…" : "Text me a code"}
           </Button>
         </form>
       )}
 
       {step === "code" && (
-        <form onSubmit={checkCode} className="space-y-4">
-          <div className="space-y-1.5">
+        <form onSubmit={checkCode} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="code">Code sent to {phone}</Label>
             <div className="relative">
               <ShieldCheck className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="h-11 pl-9 tracking-[0.3em]" required autoFocus />
+              <Input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="123456" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="h-14 pl-9 font-display text-2xl tracking-[0.3em]" required autoFocus />
             </div>
           </div>
           <Button disabled={busy || code.length < 6} size="lg" className="w-full">
-            {busy ? "Checking..." : "Log in"}
+            {busy ? "Checking…" : "Log in"}
           </Button>
           <button type="button" onClick={() => (setStep("phone"), setCode(""))} className="w-full text-sm text-muted-foreground hover:text-foreground">
             Use a different number
@@ -151,9 +151,9 @@ export function LoginForm({ next }: { next: string }) {
       )}
 
       {step === "profile" && (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <p className="font-semibold">You&apos;re in! One quick thing.</p>
+            <p className="font-display text-xl">You&apos;re in! One quick thing.</p>
             <p className="text-sm text-muted-foreground">Pricey uses this to greet you and find prices near you, in the app and over text.</p>
           </div>
           <ProfileForm initial={{}} submitLabel="Finish" next={next} />

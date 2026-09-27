@@ -99,7 +99,8 @@ function describe(s: MapStore, filter: Filter, ranks: { cheap: Set<string>; hot:
   }
 }
 
-const GLOW_COLOR: Record<Exclude<Glow, null>, string> = { cheap: "#22c55e", deal: "#f97316", hot: "#e11d48", star: "#eab308" };
+// Same meaning as everywhere else: lime = cheap, tangerine = deals.
+const GLOW_COLOR: Record<Exclude<Glow, null>, string> = { cheap: "#c6f135", deal: "#ff7b22", hot: "#ff5a4e", star: "#f9cc66" };
 
 export function PriceMap({ stores, center, you }: { stores: MapStore[]; center: { lat: number; lng: number }; you: { lat: number; lng: number } | null }) {
   const box = useRef<HTMLDivElement>(null);
@@ -259,8 +260,8 @@ export function PriceMap({ stores, center, you }: { stores: MapStore[]; center: 
             onClick={() => setFilter(filter === id ? "all" : id)}
             aria-pressed={filter === id}
             className={cn(
-              "pointer-events-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium shadow-md backdrop-blur transition-colors",
-              filter === id ? "bg-foreground text-background" : "bg-background/85 text-foreground hover:bg-background",
+              "pointer-events-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold shadow-md backdrop-blur transition-[color,background-color,transform] active:scale-95",
+              filter === id ? "bg-primary text-primary-foreground" : "bg-background/85 text-foreground hover:bg-background",
             )}
           >
             <Icon className="size-4" />
@@ -283,19 +284,19 @@ export function PriceMap({ stores, center, you }: { stores: MapStore[]; center: 
 
       {/* Store card */}
       {store && d && (
-        <div className="absolute inset-x-3 bottom-3 rounded-2xl border bg-background/95 p-4 shadow-xl backdrop-blur">
+        <div key={store.id} className="absolute inset-x-3 bottom-3 rounded-[1.5rem] border bg-background/95 p-4 shadow-xl backdrop-blur animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate font-semibold">{store.name}</p>
+              <p className="truncate font-display text-xl">{store.name}</p>
               <p className="text-xs text-muted-foreground">
                 {store.borough}
-                {store.distanceKm !== null && ` · ${miles(store.distanceKm)} away`}
-                {store.valueVsCity !== null && ` · ${store.valueVsCity <= 0 ? `${-store.valueVsCity}% below` : `${store.valueVsCity}% above`} city avg`}
+                {store.distanceKm !== null && `, ${miles(store.distanceKm)} away`}
+                {store.valueVsCity !== null && `. ${store.valueVsCity <= 0 ? `${-store.valueVsCity}% below` : `${store.valueVsCity}% above`} the city average`}
               </p>
             </div>
             <div className="flex shrink-0 gap-1">
               <button type="button" onClick={() => toggleFav(store.id)} className="grid size-8 place-items-center rounded-full hover:bg-accent" aria-label={favs.includes(store.id) ? "Remove favorite" : "Add favorite"}>
-                <Heart className={cn("size-4", favs.includes(store.id) && "fill-yellow-500 text-yellow-500")} />
+                <Heart className={cn("size-4 transition-transform", favs.includes(store.id) && "scale-110 fill-hike text-hike")} />
               </button>
               <button type="button" onClick={() => setSelected(null)} className="grid size-8 place-items-center rounded-full hover:bg-accent" aria-label="Close">
                 <X className="size-4" />
@@ -303,8 +304,8 @@ export function PriceMap({ stores, center, you }: { stores: MapStore[]; center: 
             </div>
           </div>
           {store.deals.length > 0 && (
-            <p className="mb-2 rounded-lg bg-brand-soft px-2.5 py-1.5 text-sm">
-              <Sparkles className="mr-1 inline size-3.5 text-primary" />
+            <p className="mb-2 rounded-xl bg-tangerine px-2.5 py-1.5 text-sm font-semibold text-tangerine-foreground">
+              <Sparkles className="mr-1 inline size-3.5" />
               {store.deals[0]}
             </p>
           )}
@@ -312,17 +313,17 @@ export function PriceMap({ stores, center, you }: { stores: MapStore[]; center: 
             {store.prices.slice(0, 4).map((p) => (
               <li key={p.item} className="flex justify-between gap-2">
                 <span className="truncate text-muted-foreground">{p.item.split(" (")[0]}</span>
-                <span className="font-semibold tabular-nums">{p.price}</span>
+                <span className="font-display tabular-nums">{p.price}</span>
               </li>
             ))}
           </ul>
           <div className="flex gap-2">
             <Button asChild size="sm" className="flex-1">
-              <Link href={`/store/${store.id}`}>All prices</Link>
+              <Link href={`/store/${store.id}`}>See all prices</Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="flex-1">
               <a href={`https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`} target="_blank" rel="noreferrer">
-                <Navigation /> Directions
+                <Navigation data-icon="inline-start" /> Directions
               </a>
             </Button>
           </div>

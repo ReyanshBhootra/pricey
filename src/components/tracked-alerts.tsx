@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { money, timeAgo } from "@/lib/format";
 import type { PriceChange } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { useTracked } from "./track-button";
 
 type Change = PriceChange & { itemName: string; storeName: string };
@@ -32,19 +33,23 @@ export function TrackedAlerts({ changes }: { changes: Change[] }) {
   if (mine.length === 0) return null;
 
   return (
-    <section className="mb-5 rounded-xl border bg-warn-soft p-4">
-      <h2 className="mb-2 text-sm font-semibold">Price changes on items you track</h2>
-      <ul className="space-y-1.5 text-sm">
+    <section className="mb-5 rounded-[1.5rem] bg-brand-soft p-4">
+      <h2 className="mb-2 font-display text-xl">Price changes on items you track</h2>
+      <ul className="flex flex-col gap-2 text-sm">
         {mine.map((c) => {
-          const Icon = c.newPrice < c.oldPrice ? TrendingDown : TrendingUp;
+          const down = c.newPrice < c.oldPrice;
+          const Icon = down ? TrendingDown : TrendingUp;
           return (
-            <li key={c.id} className="flex items-start gap-2">
-              <Icon className="mt-0.5 size-4 shrink-0" />
+            <li key={c.id} className="flex items-start gap-2.5">
+              <Icon className={cn("mt-0.5 size-4 shrink-0", down ? "text-drop" : "text-hike")} />
               <span>
-                <Link href={`/item/${c.itemId}`} className="font-medium hover:underline">
+                <Link href={`/item/${c.itemId}`} className="font-semibold hover:underline">
                   {c.itemName}
                 </Link>{" "}
-                at {c.storeName}: {money(c.oldPrice)} → <strong>{money(c.newPrice)}</strong>{" "}
+                at {c.storeName}{" "}
+                <span className="whitespace-nowrap">
+                  <s className="text-muted-foreground">{money(c.oldPrice)}</s> <strong className={down ? "text-drop" : "text-hike"}>{money(c.newPrice)}</strong>
+                </span>{" "}
                 <span className="text-muted-foreground">{timeAgo(c.timestamp)}</span>
               </span>
             </li>

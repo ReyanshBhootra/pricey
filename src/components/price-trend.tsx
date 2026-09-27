@@ -24,11 +24,11 @@ export function PriceTrend({ history, days = 30 }: { history: PriceHistory; days
 
   const flat = Math.abs(changePct!) < 2;
   const up = !flat && changePct! > 0;
-  const tone = flat ? "text-muted-foreground" : up ? "text-red-600 dark:text-red-400" : "text-green-700 dark:text-green-400";
+  const tone = flat ? "text-muted-foreground" : up ? "text-hike" : "text-drop";
   const Icon = flat ? Minus : up ? TrendingUp : TrendingDown;
 
   return (
-    <div className="mb-4 flex items-center gap-4 rounded-lg border p-3">
+    <div className="mb-6 flex items-center gap-4 rounded-[1.25rem] border bg-card p-4">
       <div className="min-w-0 flex-1">
         <p className={cn("flex items-center gap-1.5 text-sm font-semibold", tone)}>
           <Icon className="size-4" /> {label}
@@ -38,7 +38,7 @@ export function PriceTrend({ history, days = 30 }: { history: PriceHistory; days
         </p>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className={cn("h-12 w-36 shrink-0 sm:w-48", tone)} role="img" aria-label={`${label}: price trend over ${days} days`}>
-        <path d={path} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <path d={path} fill="none" stroke="currentColor" strokeWidth="3" pathLength={1} className="trend-draw" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
       </svg>
     </div>
   );

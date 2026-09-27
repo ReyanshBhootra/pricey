@@ -18,7 +18,7 @@ export function ShowMore({ children, initial = 5, className }: { children: React
           type="button"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
-          className="mt-1 inline-flex items-center gap-1 rounded-md py-1 text-sm font-medium text-primary hover:underline"
+          className="mt-1 inline-flex items-center gap-1 rounded-md py-1.5 text-sm font-semibold text-primary hover:underline"
         >
           {open ? "Show less" : `Show ${hidden} more`}
           <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />

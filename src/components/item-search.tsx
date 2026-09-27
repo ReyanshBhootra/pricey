@@ -24,15 +24,15 @@ export function ItemSearch({ items }: { items: Item[] }) {
   };
 
   return (
-    <form onSubmit={go} className="relative mb-4">
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+    <form onSubmit={go} className="relative">
+      <Search className="pointer-events-none absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2 text-[#6b5f76]" />
       <Input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         list="pricey-items"
-        placeholder="How much are eggs? Search an item"
+        placeholder="How much are eggs?"
         aria-label="Search an item"
-        className="h-11 bg-card pl-9"
+        className="h-13 rounded-full border-transparent bg-field pl-12 text-base text-field-foreground shadow-lg placeholder:text-[#6b5f76] focus-visible:ring-lime/70 md:text-base dark:bg-field"
       />
       <datalist id="pricey-items">
         {items.map((i) => (

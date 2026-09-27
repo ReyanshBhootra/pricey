@@ -24,31 +24,31 @@ export function ProfileForm({ initial, submitLabel = "Save", next }: { initial: 
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="space-y-4"
+      className="flex flex-col gap-4"
     >
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="firstName">First name</Label>
           <Input id="firstName" name="firstName" required maxLength={40} defaultValue={initial.firstName} autoComplete="given-name" />
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <Label htmlFor="lastName">Last name</Label>
           <Input id="lastName" name="lastName" maxLength={40} defaultValue={initial.lastName} autoComplete="family-name" />
         </div>
       </div>
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">
           Email <span className="font-normal text-muted-foreground">(optional)</span>
         </Label>
         <Input id="email" name="email" type="email" maxLength={120} defaultValue={initial.email} autoComplete="email" />
       </div>
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="zip">Home ZIP</Label>
         <Input id="zip" name="zip" inputMode="numeric" maxLength={5} defaultValue={initial.zip} placeholder="11215" autoComplete="postal-code" />
         <p className="text-xs text-muted-foreground">For real distances in miles, here and when you text Pricey.</p>
       </div>
       <Button disabled={pending} className="w-full" size="lg">
-        {pending ? "Saving..." : submitLabel}
+        {pending ? "Saving…" : submitLabel}
       </Button>
       {state && !state.ok && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.ok && !next && <p className="text-sm text-primary">Saved.</p>}

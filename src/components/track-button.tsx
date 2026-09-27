@@ -60,8 +60,8 @@ export function TrackButton({ itemId }: { itemId: string }) {
   };
 
   return (
-    <Button variant={tracked ? "secondary" : "outline"} size="sm" onClick={toggle} className="rounded-full">
-      {tracked ? <BellRing className="text-primary" /> : <Bell />}
+    <Button variant={tracked ? "default" : "outline"} onClick={toggle} aria-pressed={tracked}>
+      {tracked ? <BellRing data-icon="inline-start" className="origin-top motion-safe:animate-[pricey-ring_600ms_ease-in-out]" /> : <Bell data-icon="inline-start" />}
       {tracked ? "Tracking price" : "Track price"}
     </Button>
   );

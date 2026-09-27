@@ -1,6 +1,6 @@
 import { generateTextStream, geminiEnabled } from "@/lib/gemini";
 import { answerFromData, buildContext, SYSTEM_PROMPT } from "@/lib/grounding";
-import { inNyc } from "@/lib/format";
+import { getWhere, isExact } from "@/lib/where";
 
 type Msg = { role: "user" | "assistant"; text: string };
 
@@ -13,7 +13,7 @@ const reply = (body: BodyInit, source: "gemini" | "data") =>
   new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Pricey-Source": source } });
 
 export async function POST(req: Request) {
-  let body: { messages?: Msg[]; lat?: number; lng?: number };
+  let body: { messages?: Msg[] };
   try {
     body = await req.json();
   } catch {
@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   const question = messages.at(-1);
   if (!question || question.role !== "user") return Response.json({ error: "Ask a question" }, { status: 400 });
 
-  const where = typeof body.lat === "number" && typeof body.lng === "number" && inNyc(body.lat, body.lng) ? { lat: body.lat, lng: body.lng } : null;
+  // The place they picked on any page (Near me, a ZIP, or a borough), shared through a cookie.
+  const saved = await getWhere();
+  const where = saved && { lat: saved.lat, lng: saved.lng, label: saved.kind === "gps" ? undefined : saved.label, approximate: !isExact(saved) };
   // Ground on the last few questions so follow-ups ("is that the cheapest?") keep their item.
   const recent = messages.filter((m) => m.role === "user").slice(-3).map((m) => m.text).join("\n");
   const ctx = await buildContext(recent, where);

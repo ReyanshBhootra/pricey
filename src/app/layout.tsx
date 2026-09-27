@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { AccountSync } from "@/components/account-sync";
 import { getUser } from "@/lib/data";
@@ -42,8 +41,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {profile && <AccountSync tracked={profile.tracked ?? []} favorites={profile.favorites ?? []} />}
         <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">{children}</main>
         <footer className="mx-auto w-full max-w-2xl px-4 py-6 text-xs text-muted-foreground">
-          Pricey. Prices reported by New Yorkers, trusted by vouching. NYC only.{" "}
-          <Link href="/text" className="underline-offset-2 hover:underline">Text Pricey</Link>
+          Pricey. Prices reported by New Yorkers, trusted by vouching. NYC only.
         </footer>
       </body>
     </html>

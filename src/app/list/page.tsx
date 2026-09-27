@@ -1,44 +1,19 @@
-import { Bus, Footprints, ListChecks, MapPin } from "lucide-react";
+import { Bus, Check, Footprints, ListChecks, MapPin, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { chipClass } from "@/components/chip";
-import { LocateButton } from "@/components/locate-button";
-import { Button } from "@/components/ui/button";
+import { LocationPicker } from "@/components/location-picker";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { getItems, getUser } from "@/lib/data";
-import { inNyc, money } from "@/lib/format";
+import { getItems } from "@/lib/data";
+import { money } from "@/lib/format";
 import { matchItems, type Located } from "@/lib/grounding";
 import { optimizeList, type Stop } from "@/lib/optimizer";
-import { BOROUGH_PLACES, findPlace } from "@/lib/places";
-import { sessionUserId } from "@/lib/session";
-import { findBorough } from "@/lib/texting";
-import { BOROUGHS, type Borough } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { getWhere, isExact } from "@/lib/where";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Shopping list" };
-
-// Where to measure from: a place they typed, their location, the borough they picked on
-// Nearby, or the home saved on their account.
-async function locate(sp: Record<string, string | undefined>): Promise<Located | null> {
-  if (sp.near) {
-    const p = findPlace(sp.near);
-    if (p) return { lat: p.lat, lng: p.lng, label: p.label };
-    const b = findBorough(sp.near);
-    if (b) return { ...BOROUGH_PLACES[b], approximate: true };
-  }
-  const lat = Number(sp.lat);
-  const lng = Number(sp.lng);
-  if (sp.lat && sp.lng && inNyc(lat, lng)) {
-    if (sp.loc && (BOROUGHS as readonly string[]).includes(sp.loc)) return { ...BOROUGH_PLACES[sp.loc as Borough], approximate: true };
-    return { lat, lng, label: "you" };
-  }
-  const id = await sessionUserId();
-  const home = id ? (await getUser(id))?.home : undefined;
-  return home ? { lat: home.lat, lng: home.lng, label: home.label, approximate: home.approximate } : null;
-}
 
 function StopCard({ stop, step }: { stop: Stop; step?: number }) {
   return (
@@ -70,23 +45,22 @@ function StopCard({ stop, step }: { stop: Stop; step?: number }) {
 }
 
 export default async function ListPage({ searchParams }: PageProps<"/list">) {
-  const raw = await searchParams;
-  const sp = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, typeof v === "string" ? v : undefined]));
-  const [items, where] = await Promise.all([getItems(), locate(sp)]);
-  const names = (sp.items ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  const result = names.length ? await optimizeList(names, where, (n, all) => all.find((i) => i.id === n) ?? matchItems(n, all)[0] ?? null) : null;
-  const chosen = new Set(result?.items.map((i) => i.id) ?? []);
+  const sp = await searchParams;
+  const saved = await getWhere();
+  // The planner needs real distances; a borough alone means "anywhere in the borough".
+  const where: Located | null = saved && { lat: saved.lat, lng: saved.lng, label: saved.label, approximate: !isExact(saved) };
+  const items = await getItems();
+  const ids = (typeof sp.items === "string" ? sp.items : "").split(",").map((s) => s.trim()).filter(Boolean);
+  const result = ids.length ? await optimizeList(ids, where, (n, all) => all.find((i) => i.id === n) ?? matchItems(n, all)[0] ?? null) : null;
+  const chosen = result?.items ?? [];
+  const chosenIds = new Set(chosen.map((i) => i.id));
 
-  // Chips add or remove an item, keeping everything else in the URL.
+  // Tapping an item adds or removes it. `replace` keeps Back from stepping through every tap.
   const href = (id: string) => {
-    const next = chosen.has(id) ? [...chosen].filter((x) => x !== id) : [...chosen, id];
-    const q = new URLSearchParams(Object.entries(sp).filter((e): e is [string, string] => !!e[1]));
-    if (next.length) q.set("items", [...next, ...(result?.unknown ?? [])].join(","));
-    else q.delete("items");
-    return `/list?${q}`;
+    const next = chosenIds.has(id) ? chosen.filter((i) => i.id !== id).map((i) => i.id) : [...chosen.map((i) => i.id), id];
+    return next.length ? `/list?items=${next.join(",")}` : "/list";
   };
-  const hidden = Object.entries(sp).filter(([k, v]) => v && !["items", "near"].includes(k));
-  const whereText = where ? (where.approximate ? `${where.label} (borough only, so no walking times)` : where.label === "you" ? "your location" : `near ${where.label}`) : null;
+  const whereText = !saved ? null : saved.kind === "gps" ? "your location" : saved.kind === "place" ? `near ${saved.label}` : `${saved.label} (borough only, so no walking times)`;
 
   return (
     <>
@@ -97,41 +71,38 @@ export default async function ListPage({ searchParams }: PageProps<"/list">) {
         The cheapest sensible trip. Walking is free, the subway is {money(2.9)} each way, and we only suggest a second store when it&apos;s close by and really saves you money.
       </p>
 
-      <form action="/list" className="mb-4 space-y-2">
-        {hidden.map(([k, v]) => (
-          <input key={k} type="hidden" name={k} value={v} />
-        ))}
-        <Input name="items" defaultValue={result ? [...result.items.map((i) => i.name), ...result.unknown].join(", ") : ""} placeholder="eggs, milk, bread, bananas" aria-label="Your list, separated by commas" />
-        <div className="flex flex-wrap gap-2">
-          <Input name="near" defaultValue={sp.near ?? ""} placeholder={whereText ? `From ${whereText}` : "ZIP or neighborhood"} aria-label="ZIP or neighborhood" className="max-w-56 flex-1" />
-          <Button type="submit">Plan my trip</Button>
-          <Suspense>
-            <LocateButton />
-          </Suspense>
-        </div>
-      </form>
+      <h2 className="mb-2 text-sm font-semibold">1. Where are you starting from?</h2>
+      <Suspense>
+        <LocationPicker where={saved && { label: saved.label, kind: saved.kind }} />
+      </Suspense>
 
+      <h2 className="mb-2 flex items-baseline justify-between gap-2 text-sm font-semibold">
+        2. What do you need?
+        {chosen.length > 0 && (
+          <Link href="/list" replace scroll={false} className="text-xs font-normal text-muted-foreground hover:text-foreground">
+            Clear list
+          </Link>
+        )}
+      </h2>
       <div className="mb-6 flex flex-wrap gap-2">
         {items.map((i) => (
-          <Link key={i.id} href={href(i.id)} scroll={false} className={cn(chipClass(chosen.has(i.id)), "normal-case")}>
+          <Link key={i.id} href={href(i.id)} replace scroll={false} className={cn(chipClass(chosenIds.has(i.id)), "normal-case")} aria-pressed={chosenIds.has(i.id)}>
+            {chosenIds.has(i.id) ? <Check className="mr-1 size-3.5" /> : <Plus className="mr-1 size-3.5 text-muted-foreground" />}
             {i.name}
           </Link>
         ))}
       </div>
 
+      {!result && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Tap the items you need and your cheapest trip shows up here.</p>}
+
       {result && (
         <div className="space-y-4">
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <MapPin className="size-4" />
-            {whereText ? `Measured from ${whereText}.` : "No location yet, so this is across NYC. Add a ZIP to count walking and fares."}
+            {whereText ? `Measured from ${whereText}.` : "No location yet, so this is across NYC. Pick one above to count walking and fares."}
           </p>
 
-          {!result.best && (
-            <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-              {result.items.length ? "Nobody has reported these near you yet." : "Pick items from the list above."}
-            </p>
-          )}
-
+          {!result.best && <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">Nobody has reported these near you yet.</p>}
           {result.best && (
             <Card className="gap-3 p-4">
               <div className="flex items-baseline justify-between gap-2">
@@ -163,14 +134,6 @@ export default async function ListPage({ searchParams }: PageProps<"/list">) {
             <p className="text-sm text-muted-foreground">Splitting across stores isn&apos;t worth it here: the savings are small or the stores are too far apart.</p>
           )}
 
-          {result.unknown.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              Not tracked yet: {result.unknown.join(", ")}.{" "}
-              <Link href={`/report?newItem=${encodeURIComponent(result.unknown[0])}`} className="text-primary hover:underline">
-                Add a price
-              </Link>
-            </p>
-          )}
         </div>
       )}
     </>

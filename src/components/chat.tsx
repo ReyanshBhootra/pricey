@@ -4,38 +4,16 @@ import { ArrowUp, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { inNyc } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; text: string; fromData?: boolean };
 
 const SUGGESTIONS = ["How much are eggs near me?", "What can I cook for under $10?", "Any free food right now?", "Where's the cheapest coffee?"];
 
-// Location if we can get it within 3 seconds; never block the chat on it. The browser's own
-// timeout does not start while a permission prompt is open, so we add a hard cutoff.
-function currentSpot(): Promise<{ lat: number; lng: number } | null> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    const cutoff = setTimeout(() => resolve(null), 3000);
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        clearTimeout(cutoff);
-        resolve(inNyc(coords.latitude, coords.longitude) ? { lat: coords.latitude, lng: coords.longitude } : null);
-      },
-      () => {
-        clearTimeout(cutoff);
-        resolve(null);
-      },
-      { timeout: 3000, maximumAge: 300000 },
-    );
-  });
-}
-
 export function Chat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const spot = useRef<Promise<{ lat: number; lng: number } | null> | null>(null);
   const end = useRef<HTMLDivElement>(null);
 
   // Braces matter: newer Chrome returns a Promise from scrollIntoView, and React would
@@ -52,12 +30,10 @@ export function Chat() {
     setInput("");
     setBusy(true);
     try {
-      spot.current ??= currentSpot();
-      const where = await spot.current;
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next, ...(where ?? {}) }),
+        body: JSON.stringify({ messages: next }), // the server knows where they are (saved location)
         signal: AbortSignal.timeout(35000),
       });
       if (!res.ok || !res.body) {

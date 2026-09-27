@@ -1,11 +1,13 @@
 "use server";
 
 import { actingUserId, sessionUserId } from "./session";
-import { findPlace, placeFromZip } from "./places";
+import { BOROUGH_PLACES, findPlace, placeFromCoords, placeFromZip } from "./places";
+import { WHERE_COOKIE, type Where } from "./where";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { addItem, addStore, createForumPost, getItem, getStore, saveUser, submitReport } from "./data";
 import { BOROUGH_CENTERS, inNyc } from "./format";
-import { dealsDigest, handleText, postDeal } from "./texting";
+import { dealsDigest, findBorough, handleText, postDeal } from "./texting";
 import { BOROUGHS, CATEGORIES, type Borough, type Category, type SubmitResult, type UserProfile } from "./types";
 
 // Reports and posts belong to the logged-in account, or to this browser until they log in.
@@ -165,4 +167,35 @@ export async function confirmPriceAction(itemId: string, storeId: string, price:
     console.error("confirmPriceAction failed:", e);
     return { ok: false, error: "Couldn't save that. Try again." };
   }
+}
+
+// Sets where the person is shopping from: their GPS position, a ZIP or neighborhood they typed,
+// or a borough. Remembered for every page, and saved as their home if they're logged in.
+export async function setWhereAction(input: { lat: number; lng: number } | { text: string } | { borough: string }): Promise<{ ok: true; label: string } | { ok: false; error: string }> {
+  let where: Where | null = null;
+  if ("borough" in input) {
+    const b = BOROUGHS.find((x) => x === input.borough);
+    if (b) where = { ...BOROUGH_PLACES[b], kind: "borough" };
+  } else if ("text" in input) {
+    const text = input.text.trim().slice(0, 60);
+    if (!text) return { ok: false, error: "Type a ZIP like 11215 or a neighborhood like Astoria." };
+    const p = findPlace(text);
+    if (p) where = { lat: p.lat, lng: p.lng, label: p.label, borough: p.borough, kind: "place" };
+    else {
+      const b = BOROUGHS.find((x) => x.toLowerCase() === text.toLowerCase()) ?? findBorough(text);
+      if (b) where = { ...BOROUGH_PLACES[b], kind: "borough" };
+    }
+    if (!where) return { ok: false, error: `Couldn't find "${text}" in NYC. Try a ZIP like 11215 or a neighborhood like Astoria.` };
+  } else {
+    const p = Number.isFinite(input.lat) && Number.isFinite(input.lng) ? placeFromCoords(input.lat, input.lng) : null;
+    if (!p) return { ok: false, error: "You look to be outside NYC. Type a ZIP instead." };
+    where = { lat: Math.round(input.lat * 1e4) / 1e4, lng: Math.round(input.lng * 1e4) / 1e4, label: "you", borough: p.borough, kind: "gps" };
+  }
+  if (!where) return { ok: false, error: "Pick a borough or type a ZIP." };
+
+  (await cookies()).set(WHERE_COOKIE, JSON.stringify(where), { maxAge: 60 * 60 * 24 * 180, sameSite: "lax", path: "/" });
+  // Their account remembers a typed ZIP or neighborhood as home (not GPS, which changes).
+  const account = await sessionUserId();
+  if (account && where.kind === "place") await saveUser(account, { home: { label: where.label, lat: where.lat, lng: where.lng, borough: where.borough } });
+  return { ok: true, label: where.label };
 }

@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { StillPrice } from "@/components/still-price";
 import { Badge } from "@/components/ui/badge";
-import { money, timeAgo } from "@/lib/format";
+import { hoursAgo, money, timeAgo } from "@/lib/format";
 import type { Store, TrustedPrice } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const STALE_MS = 7 * 24 * 60 * 60_000;
 
 // Trusted price per store for one item, cheapest first. Week-old prices ask "Still $X?".
 export function PriceList({ prices, stores, highlight }: { prices: TrustedPrice[]; stores: Map<string, Store>; highlight?: string }) {
@@ -13,7 +11,7 @@ export function PriceList({ prices, stores, highlight }: { prices: TrustedPrice[
     return <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">No reports yet. Be the first.</p>;
   }
   const cheapest = prices[0].price;
-  const now = Date.now();
+  const staleBefore = hoursAgo(7 * 24); // nobody has confirmed it in a week
   return (
     <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
       {prices.map((p) => {
@@ -33,7 +31,7 @@ export function PriceList({ prices, stores, highlight }: { prices: TrustedPrice[
                 {p.price === cheapest && prices.length > 1 && <Badge>lowest</Badge>}
                 {money(p.price)}
               </div>
-              {now - p.lastReportedAt > STALE_MS ? (
+              {p.lastReportedAt < staleBefore ? (
                 <StillPrice itemId={p.itemId} storeId={p.storeId} price={p.price} />
               ) : (
               <div className="text-xs text-muted-foreground">

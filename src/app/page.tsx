@@ -18,7 +18,8 @@ import {
   getPricesForStores,
   getStores,
 } from "@/lib/data";
-import { DEFAULT_LOCATION, miles, money, timeAgo } from "@/lib/format";
+import { miles, money, timeAgo } from "@/lib/format";
+import { DEFAULT_WHERE, getWhere, isExact, nearText } from "@/lib/where";
 import { CATEGORIES, type Category, type TrustedPrice } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -27,51 +28,56 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const str = (k: string) =>
     typeof sp[k] === "string" ? (sp[k] as string) : undefined;
-  const lat =
-    Number(str("lat") ?? DEFAULT_LOCATION.lat) || DEFAULT_LOCATION.lat;
-  const lng =
-    Number(str("lng") ?? DEFAULT_LOCATION.lng) || DEFAULT_LOCATION.lng;
-  const loc = str("loc") ?? "Manhattan";
+  // Where they're shopping from, shared with every page (see lib/where.ts).
+  const saved = await getWhere();
+  const where = saved ?? DEFAULT_WHERE;
+  const { lat, lng } = where;
   const cat = CATEGORIES.includes(str("cat") as Category)
     ? (str("cat") as Category)
     : undefined;
   const view = str("view") === "map" ? "map" : "list";
 
-  // Stores within about 2 miles, or the 5 closest if that is too few.
-  let nearby = await getNearbyStores(lat, lng, 3);
+  // A borough: its stores. A real place: stores within about 2 miles, or the 5 closest.
+  let nearby =
+    where.kind === "borough"
+      ? (await getNearbyStores(lat, lng, 100)).filter((s) => s.borough === where.borough)
+      : await getNearbyStores(lat, lng, 3);
   if (nearby.length < 3)
     nearby = (await getNearbyStores(lat, lng, 100)).slice(0, 5);
 
-  const [items, stores, prices, events, changes] = await Promise.all([
+  const [items, stores, prices, allEvents, changes] = await Promise.all([
     getItems(),
     getStores(),
     getPricesForStores(
       nearby.map((s) => s.id),
       cat,
     ),
-    getActiveEvents({ hours: 24, lat, lng, radiusKm: 5 }),
+    // Deals within about 3 miles of a real place, or anywhere in the borough.
+    getActiveEvents(isExact(where) ? { hours: 24, lat, lng, radiusKm: 5 } : { hours: 24 }),
     getPriceChanges({ hours: 48 }),
   ]);
   // With a category filter on, skip stores with nothing in it (unless that leaves nothing).
   if (cat && nearby.some((s) => prices.get(s.id)?.length))
     nearby = nearby.filter((s) => prices.get(s.id)?.length);
+  const boroughOf = new Map(stores.map((s) => [s.id, s.borough]));
+  const events = isExact(where) ? allEvents : allEvents.filter((e) => boroughOf.get(e.storeId) === where.borough);
   const itemName = new Map(items.map((i) => [i.id, i.name]));
   const storeName = new Map(stores.map((s) => [s.id, s.name]));
   const eventSpots = new Set(events.map((e) => e.storeId)).size;
 
   const viewHref = (v: "list" | "map") => {
-    const q = new URLSearchParams({ lat: String(lat), lng: String(lng), loc });
+    const q = new URLSearchParams();
     if (cat) q.set("cat", cat);
     if (v === "map") q.set("view", "map");
     return `/?${q}`;
   };
   const mapStores =
     view === "map"
-      ? await getMapStores(loc === "You" ? { lat, lng } : null)
+      ? await getMapStores(isExact(where) ? { lat, lng } : null)
       : [];
 
   const catHref = (c?: Category) => {
-    const q = new URLSearchParams({ lat: String(lat), lng: String(lng), loc });
+    const q = new URLSearchParams();
     if (c) q.set("cat", c);
     if (view === "map") q.set("view", "map");
     return `/?${q}`;
@@ -97,7 +103,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
       <LiveRefresh name="reports" />
       <div className="mb-1 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">
-          Real prices near you
+          Real prices {nearText(where)}
         </h1>
         <div
           className="flex shrink-0 rounded-full border bg-card p-0.5 text-sm"
@@ -109,6 +115,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
               key={v}
               href={viewHref(v)}
               scroll={false}
+              replace
               role="tab"
               aria-selected={view === v}
               className={`rounded-full px-3 py-1 capitalize ${view === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
@@ -124,10 +131,10 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
 
       <ItemSearch items={items} />
       <Suspense>
-        <LocationPicker label={loc} />
+        <LocationPicker where={saved && { label: saved.label, kind: saved.kind }} />
       </Suspense>
       <Link
-        href={`/list?${new URLSearchParams({ lat: String(lat), lng: String(lng), loc })}`}
+        href="/list"
         className="mb-4 flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm shadow-xs hover:bg-accent"
       >
         <ListChecks className="size-4 text-primary" />
@@ -150,7 +157,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
         <details className="group mb-5 rounded-xl border bg-brand-soft p-4">
           <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold">
             <Sparkles className="size-4 text-primary" />
-            {eventSpots} {eventSpots === 1 ? "spot" : "spots"} near you{" "}
+            {eventSpots} {eventSpots === 1 ? "spot" : "spots"} {nearText(where)}{" "}
             {eventSpots === 1 ? "has" : "have"} deals right now
             <ChevronRight className="ml-auto size-4 transition-transform group-open:rotate-90" />
           </summary>
@@ -177,12 +184,12 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
         <PriceMap
           stores={mapStores}
           center={{ lat, lng }}
-          you={loc === "You" ? { lat, lng } : null}
+          you={isExact(where) ? { lat, lng } : null}
         />
       ) : (
         <>
           <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1">
-            <Link href={catHref()} className={chipClass(!cat)} scroll={false}>
+            <Link href={catHref()} className={chipClass(!cat)} scroll={false} replace>
               All
             </Link>
             {CATEGORIES.map((c) => (
@@ -191,6 +198,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
                 href={catHref(c)}
                 className={chipClass(cat === c)}
                 scroll={false}
+                replace
               >
                 {c}
               </Link>
@@ -215,7 +223,7 @@ export default async function Nearby({ searchParams }: PageProps<"/">) {
                         {s.name}
                       </Link>
                       <span className="shrink-0 text-xs text-muted-foreground">
-                        {miles(s.distanceKm)} · {s.borough}
+                        {isExact(where) ? `${miles(s.distanceKm)} · ${s.borough}` : s.borough}
                       </span>
                     </div>
                     {list.length === 0 ? (

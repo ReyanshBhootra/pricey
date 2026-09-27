@@ -261,7 +261,8 @@ export const isEndedNote = (r: Report) => r.type === "event" && ((r.note ?? "").
 export function liveDeals(events: Report[]): Report[] {
   const endedAt = new Map<string, number>();
   for (const e of events) if (isEndedNote(e)) endedAt.set(e.storeId, Math.max(endedAt.get(e.storeId) ?? 0, e.timestamp));
-  return events.filter((e) => e.type === "event" && !isEndedNote(e) && e.timestamp > (endedAt.get(e.storeId) ?? 0));
+  // A deal posted in the same moment as the "over" note counts as new.
+  return events.filter((e) => e.type === "event" && !isEndedNote(e) && e.timestamp >= (endedAt.get(e.storeId) ?? 0));
 }
 
 // Free food and pop-up reports from the last `hours`, newest first.

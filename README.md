@@ -100,7 +100,7 @@ Every page refreshes live: Firestore listeners when configured, 20 second pollin
 
 ## Real prices from store websites
 
-Your friend's scraper follows `docs/REAL_PRICES.md` and produces `data/stores.csv` and `data/prices.csv`. Then:
+Your friend's scraper follows `docs/REAL_PRICES.md` and produces either one JSON file, `data/pricey-prices.json`, or `data/stores.csv` and `data/prices.csv`. Then:
 
 ```bash
 npm run import:prices -- --check      # validates only: line-by-line errors, unit mix-up warnings

@@ -60,6 +60,28 @@ trader-joes-union-sq,onions-3lb,3.75,,2 lb bag $2.50,Yellow Onions,https://www.t
 - `scraped_at`: the date you got it, `YYYY-MM-DD`.
 - `source_url`: the page it came from, so we can show "from traderjoes.com" and prove the data is real.
 
+## Or: one JSON file instead of the two CSVs
+
+Save it as `data/pricey-prices.json`:
+
+```json
+{
+  "stores": [
+    { "store_id": "keyfood_522", "name": "Key Food Jamaica Ave", "chain": "Key Food", "address": "213-22 Jamaica Avenue",
+      "postal_code": "11428", "borough": "Queens", "lat": 40.7197, "lng": -73.7394, "source_url": "https://..." }
+  ],
+  "observations": [
+    { "store_id": "keyfood_522", "item_id": "eggs-dozen", "regular_price_usd": 3.99, "promo_price_usd": 1.99,
+      "promo_conditions": "club card", "package_description": "1 dozen", "product_name": "Eggland's Best",
+      "source_url": "https://...", "observed_date": "2026-09-26" }
+  ]
+}
+```
+
+- `regular_price_usd` is the everyday shelf price. `promo_price_usd` and `promo_conditions` are `null` unless there's a deal.
+- A deal that needs several items ("must buy 10") stays a note; the regular price is what Pricey shows.
+- Same item_ids, units, and rules as the CSVs above.
+
 ## Please keep it clean
 
 - Respect each site's terms and robots.txt, go slowly (no hammering), and don't log into anything. Public price pages only.

@@ -10,7 +10,7 @@ import { describeChange, priceHistory } from "../src/lib/history";
 import { FARE, optimizeList, planText } from "../src/lib/optimizer";
 import { kmToMiles } from "../src/lib/format";
 import { distanceKm } from "../src/lib/vouch";
-import { checkImport, parseCsv } from "../src/lib/real-prices";
+import { checkImport, checkImportJson, parseCsv } from "../src/lib/real-prices";
 
 async function main() {
   const shoprite = (await getPricesForItem("potatoes-5lb")).find((p) => p.storeId === "shoprite-staten-island");
@@ -122,8 +122,18 @@ async function main() {
   assert.ok(good.warnings.some((w) => /far from the usual/.test(w)), "per-egg price flagged as a unit mix-up");
   const bad = checkImport(storesCsv, "store_id,item_id,price,scraped_at\nnope,caviar,abc,26/09/2026\n");
   assert.equal(bad.errors.length, 1);
-  assert.match(bad.errors[0], /line 2: .*isn't in stores.csv.*isn't one of the 16.*should be a number.*should look like/);
-  console.log("importer: validates rows, flags unit mix-ups, uses sale prices");
+  assert.match(bad.errors[0], /line 2: .*isn't in the store list.*isn't one of the 16.*should be a number.*should look like/);
+  // The scraper's JSON: multi-buy deals keep the regular price, a store's missing coordinates
+  // are reported once instead of on every one of its prices.
+  const store = { store_id: "keyfood_522", name: "Key Food Jamaica Ave", borough: "Queens", lat: 40.7197, lng: -73.7394 };
+  const obs = (item_id: string, regular: number | null, promo: number | null, promo_conditions: string | null) => ({ store_id: "keyfood_522", item_id, regular_price_usd: regular, promo_price_usd: promo, promo_conditions, observed_date: "2026-09-26" });
+  const fromJson = checkImportJson(JSON.stringify({ stores: [store], observations: [obs("eggs-dozen", 3.99, 1.99, "club card"), obs("pasta-1lb", 1.79, 0.5, "10 for $5, must buy 10"), obs("milk-gallon", null, 3.99, null)] }), { now: Date.parse("2026-09-26") });
+  assert.deepEqual(fromJson.errors, []);
+  assert.deepEqual(fromJson.data.reports.map((r) => [r.storeId, r.price]), [["keyfood-522", 1.99], ["keyfood-522", 1.79], ["keyfood-522", 3.99]]);
+  assert.match(fromJson.data.reports[1].note!, /\$0\.50 each.*must buy 10/);
+  const noCoords = checkImportJson(JSON.stringify({ stores: [{ ...store, lat: null, lng: null }], observations: [obs("eggs-dozen", 3.99, null, null), obs("noodles", 1, null, null)] }));
+  assert.deepEqual(noCoords.errors.map((e) => e.split(":")[0]), ["stores[0] (keyfood_522)", "observations[1] (keyfood_522 + noodles)"]);
+  console.log("importer: validates rows, flags unit mix-ups, uses sale prices, reads the scraper's JSON");
 
   console.log("OK");
   process.exit(0);

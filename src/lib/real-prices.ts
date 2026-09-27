@@ -50,14 +50,20 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((f) => f.trim()));
 }
 
-// Rows as objects keyed by lowercase header; line numbers match the file (header is line 1).
-function table(text: string, required: string[], file: string, errors: string[]) {
+// One store or price row, whichever file it came from. `at` says where, for error messages.
+type Row = { at: string; get: (k: string) => string };
+
+// CSV rows keyed by lowercase header; line numbers match the file (header is line 1).
+function table(text: string, required: string[], file: string, errors: string[]): Row[] {
   const [head, ...rows] = parseCsv(text);
   const cols = (head ?? []).map((h) => h.trim().toLowerCase());
   const missing = required.filter((c) => !cols.includes(c));
   if (missing.length) errors.push(`${file}: missing column${missing.length > 1 ? "s" : ""} ${missing.join(", ")} (found: ${cols.join(", ") || "nothing"})`);
-  return rows.map((r, i) => ({ line: i + 2, get: (k: string) => (r[cols.indexOf(k)] ?? "").trim() }));
+  return rows.map((r, i) => ({ at: `${file} line ${i + 2}`, get: (k: string) => (r[cols.indexOf(k)] ?? "").trim() }));
 }
+
+// ids like "keyfood_522" become "keyfood-522".
+const normId = (v: string) => v.trim().toLowerCase().replace(/[_\s]+/g, "-");
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DAY = 24 * 60 * 60_000;
@@ -81,9 +87,67 @@ export interface ImportCheck {
   warnings: string[]; // worth a look, but loaded
 }
 
-export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: number; onlyReal?: boolean } = {}): ImportCheck {
-  const now = opts.now ?? Date.now();
+type ImportOptions = { now?: number; onlyReal?: boolean };
+
+// data/stores.csv + data/prices.csv (the format in docs/REAL_PRICES.md).
+export function checkImport(storesCsv: string, pricesCsv: string, opts: ImportOptions = {}): ImportCheck {
   const errors: string[] = [];
+  const stores = table(storesCsv, ["store_id", "name", "borough", "lat", "lng"], "stores.csv", errors);
+  const prices = table(pricesCsv, ["store_id", "item_id", "price", "scraped_at"], "prices.csv", errors);
+  return checkRows(stores, prices, opts, errors);
+}
+
+// One JSON file: { stores: [...], observations: [...] }, the scraper's own format. Accepts both
+// the fields we asked for (regular_price_usd, promo_price_usd, promo_conditions, observed_date)
+// and the older flyer-only ones (price_usd, source_offer_details, borough_as_reported).
+export function checkImportJson(text: string, opts: ImportOptions = {}): ImportCheck {
+  const errors: string[] = [];
+  let doc: { stores?: unknown; observations?: unknown; prices?: unknown };
+  try {
+    doc = JSON.parse(text.replace(/^\uFEFF/, ""));
+  } catch (e) {
+    errors.push(`The file isn't valid JSON: ${e instanceof Error ? e.message : e}`);
+    return checkRows([], [], opts, errors);
+  }
+  const list = (v: unknown, name: string) => {
+    if (Array.isArray(v)) return v as Record<string, unknown>[];
+    errors.push(`The file needs a "${name}" list`);
+    return [];
+  };
+  const pick = (o: Record<string, unknown>, ...keys: string[]) => {
+    for (const k of keys) if (o[k] !== null && o[k] !== undefined && String(o[k]).trim() !== "") return String(o[k]).trim();
+    return "";
+  };
+  const stores = list(doc.stores, "stores").map((o, i): Row => {
+    const f: Record<string, string> = {
+      store_id: pick(o, "store_id"),
+      name: pick(o, "name"),
+      address: [pick(o, "address"), pick(o, "postal_code")].filter(Boolean).join(", "),
+      borough: pick(o, "borough", "borough_as_reported"),
+      lat: pick(o, "lat", "latitude"),
+      lng: pick(o, "lng", "lon", "longitude"),
+      source_url: pick(o, "source_url"),
+    };
+    return { at: `stores[${i}]${f.store_id ? ` (${f.store_id})` : ""}`, get: (k) => f[k] ?? "" };
+  });
+  const prices = list(doc.observations ?? doc.prices, "observations").map((o, i): Row => {
+    const f: Record<string, string> = {
+      store_id: pick(o, "store_id"),
+      item_id: pick(o, "item_id"),
+      price: pick(o, "regular_price_usd", "price"),
+      sale_price: pick(o, "promo_price_usd", "sale_price", "normalized_price_per_package_usd", "price_usd"),
+      conditions: pick(o, "promo_conditions", "conditions", "source_offer_details"),
+      listed_as: pick(o, "package_description", "listed_as"),
+      source_url: pick(o, "source_url"),
+      scraped_at: pick(o, "observed_date", "scraped_at"),
+    };
+    return { at: `observations[${i}] (${f.store_id} + ${f.item_id})`, get: (k) => f[k] ?? "" };
+  });
+  return checkRows(stores, prices, opts, errors);
+}
+
+function checkRows(storeRows: Row[], priceRows: Row[], opts: ImportOptions, errors: string[]): ImportCheck {
+  const now = opts.now ?? Date.now();
   const warnings: string[] = [];
   const url = (v: string, where: string) => {
     if (!v) return undefined;
@@ -94,9 +158,9 @@ export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: 
 
   // Stores
   const stores: Store[] = [];
-  for (const { line, get } of table(storesCsv, ["store_id", "name", "borough", "lat", "lng"], "stores.csv", errors)) {
-    const at = `stores.csv line ${line}`;
-    const id = get("store_id").toLowerCase();
+  const brokenStores = new Set<string>(); // already reported; their price rows aren't repeated
+  for (const { at, get } of storeRows) {
+    const id = normId(get("store_id"));
     const name = get("name");
     const borough = BOROUGHS.find((b) => b.toLowerCase() === get("borough").toLowerCase()) as Borough | undefined;
     const lat = Number(get("lat"));
@@ -106,9 +170,11 @@ export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: 
     if (stores.some((s) => s.id === id)) bad.push(`store_id "${id}" is listed twice`);
     if (!name || name.length > 100) bad.push("name is missing or too long");
     if (!borough) bad.push(`borough "${get("borough")}" should be one of ${BOROUGHS.join(", ")}`);
-    if (!get("lat") || !get("lng") || !inNyc(lat, lng)) bad.push(`lat/lng ${get("lat")}, ${get("lng")} isn't in NYC (lat is about 40.5 to 40.9, lng about -74.3 to -73.7)`);
+    if (!get("lat") || !get("lng")) bad.push("lat and lng are missing");
+    else if (!inNyc(lat, lng)) bad.push(`lat/lng ${get("lat")}, ${get("lng")} isn't in NYC (lat is about 40.5 to 40.9, lng about -74.3 to -73.7)`);
     if (bad.length) {
       errors.push(`${at}: ${bad.join("; ")}`);
+      brokenStores.add(id);
       continue;
     }
     const address = get("address") || undefined;
@@ -121,19 +187,21 @@ export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: 
   const typical = new Map(SEED_ITEMS.map((i) => [i.id, median(SEED_REPORTS.filter((r) => r.itemId === i.id && r.type === "price").map((r) => r.price))]));
   const reports: Report[] = [];
   let old = 0;
-  for (const { line, get } of table(pricesCsv, ["store_id", "item_id", "price", "scraped_at"], "prices.csv", errors)) {
-    const at = `prices.csv line ${line}`;
-    const storeId = get("store_id").toLowerCase();
-    const itemId = get("item_id").toLowerCase();
+  for (const { at, get } of priceRows) {
+    const storeId = normId(get("store_id"));
+    const itemId = normId(get("item_id"));
+    const hasRegular = !!get("price");
     const price = Number(get("price").replace(/^\$/, ""));
     const saleText = get("sale_price").replace(/^\$/, "");
     const sale = saleText ? Number(saleText) : null;
     const date = get("scraped_at");
     const day = /^\d{4}-\d{2}-\d{2}$/.test(date) ? Date.parse(`${date}T12:00:00-04:00`) : NaN;
     const bad: string[] = [];
-    if (!storeIds.has(storeId)) bad.push(`store_id "${storeId}" isn't in stores.csv`);
+    const storeBroken = brokenStores.has(storeId) && !storeIds.has(storeId);
+    if (!storeIds.has(storeId) && !storeBroken) bad.push(`store_id "${storeId}" isn't in the store list`);
     if (!items.has(itemId)) bad.push(`item_id "${itemId}" isn't one of the 16 (see docs/REAL_PRICES.md)`);
-    if (!get("price") || !Number.isFinite(price) || price <= 0 || price > 200) bad.push(`price "${get("price")}" should be a number like 3.49`);
+    if (!hasRegular && sale === null) bad.push("no price");
+    else if (hasRegular && (!Number.isFinite(price) || price <= 0 || price > 200)) bad.push(`price "${get("price")}" should be a number like 3.49`);
     if (sale !== null && (!Number.isFinite(sale) || sale <= 0 || sale > 200)) bad.push(`sale_price "${saleText}" should be a number or empty`);
     if (!Number.isFinite(day)) bad.push(`scraped_at "${date}" should look like 2026-09-26`);
     else if (day > now + DAY) bad.push(`scraped_at ${date} is in the future`);
@@ -142,8 +210,20 @@ export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: 
       errors.push(`${at}: ${bad.join("; ")}`);
       continue;
     }
-    if (sale !== null && sale >= price) warnings.push(`${at}: sale_price ${sale} isn't lower than price ${price}, using ${price}`);
-    const paid = sale !== null && sale < price ? sale : price;
+    if (storeBroken) continue; // the store's own error already covers it
+    if (hasRegular && sale !== null && sale >= price) warnings.push(`${at}: sale_price ${sale} isn't lower than price ${price}, using ${price}`);
+    // A deal you can only get by buying several ("must buy 10") isn't the price of one, so the
+    // regular price stays and the deal goes in the note. Other sales are the price you pay.
+    const conditions = get("conditions").replace(/\s+/g, " ").slice(0, 90);
+    const multiBuy = /must buy|minimum/i.test(conditions);
+    const onSale = sale !== null && (!hasRegular || (sale < price && !multiBuy));
+    const paid = onSale ? sale! : price;
+    const cents = (n: number) => `$${n.toFixed(2)}`;
+    const note = onSale
+      ? [conditions ? `Deal: ${conditions}` : "On sale", hasRegular && `usually ${cents(price)}`].filter(Boolean).join(", ")
+      : sale !== null && sale < price
+        ? `Deal: ${cents(sale)} each${conditions ? ` (${conditions})` : ""}`
+        : undefined;
     // Catches unit mix-ups (per ounce, a half gallon not converted, a 10 lb bag).
     const t = typical.get(itemId);
     if (t && (paid < t / 3 || paid > t * 3)) warnings.push(`${at}: ${items.get(itemId)!.name} at $${paid.toFixed(2)} is far from the usual ~$${t.toFixed(2)}. Check the unit (listed as "${get("listed_as") || "?"}")`);
@@ -157,7 +237,7 @@ export function checkImport(storesCsv: string, pricesCsv: string, opts: { now?: 
       timestamp: day,
       userId: `import:${domainOf(source) ?? "store-site"}`,
       type: "price",
-      ...(paid < price && { note: `On sale, usually $${price.toFixed(2)}` }),
+      ...(note && { note }),
       ...(source && { sourceUrl: source }),
     });
   }

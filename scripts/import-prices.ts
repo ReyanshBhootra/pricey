@@ -1,17 +1,21 @@
 // Loads real scraped prices (format: docs/REAL_PRICES.md).
-//   npm run import:prices              checks data/stores.csv + data/prices.csv and writes src/lib/real-prices.json
+//   npm run import:prices              checks data/pricey-prices.json (or data/stores.csv + data/prices.csv)
+//                                      and writes src/lib/real-prices.json
+//   npm run import:prices -- --file some.json   a JSON file somewhere else
 //   npm run import:prices -- --check   only checks, writes nothing
 //   npm run import:prices -- --only-real   hide the made-up demo stores and prices
 //   npm run import:prices -- --clear   go back to demo data only
 // Then commit src/lib/real-prices.json and push; the site picks it up on the next deploy.
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { checkImport, domainOf } from "../src/lib/real-prices";
+import { checkImport, checkImportJson, domainOf } from "../src/lib/real-prices";
 
 const root = join(import.meta.dirname, "..");
 const out = join(root, "src/lib/real-prices.json");
 const args = new Set(process.argv.slice(2));
-const dir = process.argv.find((a, i) => process.argv[i - 1] === "--dir") ?? join(root, "data");
+const flag = (name: string) => process.argv.find((a, i) => process.argv[i - 1] === name);
+const dir = flag("--dir") ?? join(root, "data");
+const json = flag("--file") ?? (existsSync(join(dir, "pricey-prices.json")) ? join(dir, "pricey-prices.json") : null);
 
 if (args.has("--clear")) {
   writeFileSync(out, JSON.stringify({ importedAt: null, onlyReal: false, stores: [], reports: [] }, null, 1) + "\n");
@@ -22,16 +26,25 @@ if (args.has("--clear")) {
 const read = (name: string) => {
   const p = join(dir, name);
   if (!existsSync(p)) {
-    console.error(`Missing ${p}. Put your friend's files at data/stores.csv and data/prices.csv (see docs/REAL_PRICES.md).`);
+    console.error(`Missing ${p}. Put your friend's file at data/pricey-prices.json, or data/stores.csv and data/prices.csv (see docs/REAL_PRICES.md).`);
     process.exit(1);
   }
   return readFileSync(p, "utf8");
 };
 
-const { data, errors, warnings } = checkImport(read("stores.csv"), read("prices.csv"), { onlyReal: args.has("--only-real") });
+const opts = { onlyReal: args.has("--only-real") };
+if (json && !existsSync(json)) {
+  console.error(`Missing ${json}.`);
+  process.exit(1);
+}
+if (json) console.log(`Reading ${json}\n`);
+const { data, errors, warnings } = json ? checkImportJson(readFileSync(json, "utf8"), opts) : checkImport(read("stores.csv"), read("prices.csv"), opts);
 
 for (const w of warnings) console.log(`  warning  ${w}`);
-for (const e of errors) console.log(`  ERROR    ${e}`);
+// A whole file of the same mistake is easier to read summarized.
+const shown = errors.slice(0, 25);
+for (const e of shown) console.log(`  ERROR    ${e}`);
+if (errors.length > shown.length) console.log(`  ...and ${errors.length - shown.length} more errors`);
 const stores = new Set(data.reports.map((r) => r.storeId)).size;
 const items = new Set(data.reports.map((r) => r.itemId)).size;
 const sites = [...new Set(data.reports.map((r) => domainOf(r.sourceUrl)).filter(Boolean))];

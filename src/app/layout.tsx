@@ -41,9 +41,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         <Nav signedIn={Boolean(account)} />
         {profile && <AccountSync tracked={profile.tracked ?? []} favorites={profile.favorites ?? []} />}
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 pt-4 pb-6">{children}</main>
+        <main className="mx-auto w-full max-w-[100rem] flex-1 px-4 pt-4 pb-6 sm:px-6 lg:px-8">{children}</main>
         {/* Bottom padding on phones clears the floating tab bar. */}
-        <footer className="mx-auto w-full max-w-2xl px-4 pt-2 pb-32 text-sm text-muted-foreground sm:pb-8">
+        <footer className="mx-auto w-full max-w-[100rem] px-4 pt-2 pb-32 text-sm text-muted-foreground sm:px-6 sm:pb-8 lg:px-8">
           Prices reported by New Yorkers and trusted by vouching. NYC only.
         </footer>
       </body>

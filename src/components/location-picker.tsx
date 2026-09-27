@@ -64,7 +64,7 @@ export function LocationPicker({ where }: { where: PickerWhere }) {
 
   return (
     <div className="mb-5 flex flex-col gap-2">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
         <button type="button" onClick={() => locate()} disabled={pending} className={chipClass(where?.kind === "gps")}>
           <LocateFixed className="size-3.5" />
           Near me
